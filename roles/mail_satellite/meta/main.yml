@@ -1,0 +1,5 @@
+---
+galaxy_info:
+  author: Antonis Christofides
+  description: Install Postfix on Debian/Ubuntu and send everything to a smarthost
+  license: GPLv3

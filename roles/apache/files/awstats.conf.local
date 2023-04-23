@@ -1,0 +1,16 @@
+LogFormat="%host - %other %time1 %other %methodurl %code %bytesd %refererquot %uaquot %request_time %other %virtualname"
+DNSLookup=0
+LogFile="/var/log/apache2/access.log"
+
+# Debian's awstats system, besides processing all awstats.*.conf
+# files, also processes awstats.conf alone; in some way this is the
+# "default" site.  However, we don't have a default site that we wish
+# to process. We define its settings, however, in such a way that
+# awstats will process it producing no significant output.
+# awstats.*.conf files will override these settings anyway.
+SiteDomain="nonexistent"
+
+# By default we allow full year view. If there are many awstats users
+# and they frequently view the full year view, it might cause high
+# CPU. See the related comment in awstats.conf.
+AllowFullYearView=3

@@ -1,0 +1,98 @@
+---
+- name: Check if we are running on a new server
+  stat:
+    path: /etc/ferm/ansible-early
+  register: stat_result
+
+- name: Update and upgrade if this is a new server
+  apt:
+    update_cache: yes
+    upgrade: yes
+  when: not stat_result.stat.exists
+
+- name: Restart if this is a new server
+  reboot:
+  when: not stat_result.stat.exists
+
+- name: Uninstall packages we don't want
+  apt:
+    name:
+      - unattended-upgrades
+      - ufw
+    state: absent
+
+- name: Install common apt packages
+  apt:
+    name:
+      - ferm
+      - sudo
+      - ca-certificates
+      - ntp
+      - debian-goodies
+      - locales
+
+- name: Install locales
+  locale_gen: name={{ item }} state=present
+  with_items:
+    - en_US.UTF-8
+    - en_DK.UTF-8
+
+# SSH keys
+
+- name: Create /root/.ssh
+  file: state=directory dest=/root/.ssh
+
+- name: Install ssh public key
+  copy: content="{{ ssh_pub_key }}\n" dest=/root/.ssh/id_rsa.pub
+  when: ssh_pub_key|default(False)
+
+- name: Install ssh private key
+  copy: content="{{ ssh_priv_key }}\n" dest=/root/.ssh/id_rsa mode=600
+  when: ssh_priv_key|default(False)
+
+- name: Setup root authorized keys
+  authorized_key:
+    user: root
+    exclusive: true
+    key: "{% for key in root_authorized_keys %}{{ key }}\n{% endfor %}"
+  when: root_authorized_keys|default(False)
+
+- name: Allow root to ssh without password
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: ^PermitRootLogin
+    line: PermitRootLogin without-password
+  notify: Restart ssh
+
+# Root .bashrc and .profile
+
+- name: Install bashrc for root
+  template: src=bashrc.j2 dest=/root/.bashrc
+
+- name: Install profile for root
+  copy: src=profile dest=/root/.profile
+
+
+# Firewall
+
+- name: Start ferm at boot
+  lineinfile:
+    path: "/etc/default/ferm"
+    regexp: "^ENABLED="
+    line: 'ENABLED="yes"'
+
+- name: Set ferm.conf
+  template: src=ferm.conf dest=/etc/ferm/ferm.conf
+  notify: Reload ferm
+
+- name: Create file /etc/ferm/ansible-early
+  copy:
+    dest: /etc/ferm/ansible-early
+    force: no
+    content: ""
+
+- name: Create file /etc/ferm/ansible-late
+  copy:
+    dest: /etc/ferm/ansible-late
+    force: no
+    content: ""

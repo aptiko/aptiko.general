@@ -1,0 +1,189 @@
+---
+# Remove nginx stuff
+- name: Uninstall nginx apt packages
+  apt:
+    state: absent
+    name:
+    - nginx
+    - fcgiwrap
+- name: Remove /etc/nginx
+  file: state=absent path=/etc/nginx
+- name: Remove /etc/default/fcgiwrap
+  file: state=absent dest=/etc/default/fcgiwrap
+- name: Remove user fcgiwrap
+  user: state=absent name=fcgiwrap
+- name: Remove group fcgiwrap
+  group: state=absent name=fcgiwrap
+
+
+# Does a /var/log/nginx directory exist? If yes, move it to /var/log/apache2,
+# so that apache will pick up where nginx left off and awstats won't have a
+# gap.
+- name: Check if /var/log/nginx exists
+  shell: test -d /var/log/nginx
+  register: check_var_log_nginx
+  ignore_errors: True
+  changed_when: False
+  check_mode: no
+- name: Move /var/log/nginx to /var/log/apache2
+  shell: >
+    mv /var/log/nginx /var/log/apache2 &&
+    chown -R root:adm /var/log/apache2 &&
+    chmod -R u=rwX,g=rX,o= /var/log/apache2
+  when: "check_var_log_nginx.rc == 0"
+
+- name: Install apt packages for apache
+  apt:
+    name:
+    - apache2
+    - certbot
+    - python3-certbot-apache
+    - acl
+
+- name: Install awstats
+  become: yes
+  apt:
+    name:
+    - awstats
+  when: use_awstats
+
+- name: Apache default site
+  template:
+    src: default-site.conf
+    dest: /etc/apache2/sites-available/000-default.conf
+  notify:
+  - Restart apache
+
+- name: Remove apache default-ssl.conf
+  file: state=absent path=/etc/apache2/sites-available/default-ssl.conf
+
+- name: Enable mod_proxy
+  apache2_module: name=proxy state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_proxy_http
+  apache2_module: name=proxy_http state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_proxy_fcgi
+  apache2_module: name=proxy_fcgi state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_headers
+  apache2_module: name=headers state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_rewrite
+  apache2_module: name=rewrite state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_ssl
+  apache2_module: name=ssl state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_cgid
+  apache2_module: name=cgid state=present
+  notify:
+  - Restart apache
+
+- name: Enable mod_http2
+  apache2_module: name=http2 state=present
+  notify:
+  - Restart apache
+
+- name: Ensure /etc/aliases exists
+  file:
+    path: /etc/aliases
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+
+- name: Set www-data mail alias
+  lineinfile: >
+    dest=/etc/aliases
+    line="www-data: root"
+    regexp="^www-data:.*$"
+
+- name: Create certs directory
+  file: state=directory dest=/etc/apache2/certs
+
+- name: Create /var/www
+  file: state=directory dest=/var/www
+
+# Custom configuration
+- name: Install apache custom configuration
+  copy: src=apache2-custom.conf dest=/etc/apache2/conf-available/custom.conf
+  notify:
+  - Restart apache
+- name: Check if custom configuration is enabled
+  shell: test -f /etc/apache2/conf-enabled/custom.conf
+  register: check_custom_conf
+  ignore_errors: True
+  changed_when: False
+  check_mode: no
+- name: Enable custom configuration
+  command: a2enconf custom
+  when: "check_custom_conf.rc != 0"
+  notify:
+  - Restart apache
+
+# Configuration snippets directory
+- name: Create snippets directory
+  file: name=/etc/apache2/snippets state=directory
+
+# Deactivate other-vhosts-access-log
+- name: Check if other-vhosts-access-log is enabled
+  shell: test -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
+  register: check_other_vhosts_access_log
+  ignore_errors: True
+  changed_when: False
+  check_mode: no
+- name: Disable other-vhosts-access-log
+  command: a2disconf other-vhosts-access-log
+  when: "check_other_vhosts_access_log.rc == 0"
+  notify:
+  - Restart apache
+
+- name: Allow apache firewall
+  lineinfile:
+    path: /etc/ferm/ansible-late
+    line: "proto tcp dport (http https) ACCEPT;"
+  notify: Reload ferm
+  when: use_ferm
+
+# Awstats
+- name: Awstats global configuration file
+  copy: src=awstats.conf.local dest=/etc/awstats/awstats.conf.local
+  when: use_awstats
+- name: Disable awstats static pages
+  lineinfile: >
+    dest=/etc/default/awstats
+    backrefs=yes
+    regexp='^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
+    line='AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
+  when: use_awstats
+- name: Allow www-data group to read /var/log/apache2 (required by awstats)
+  acl:
+    name: /var/log/apache2
+    state: present
+    etype: group
+    entity: www-data
+    permissions: rx
+  when: use_awstats
+- name: Allow all to read new files in /var/log/apache2 (required by awstats)
+  lineinfile:
+    dest: /etc/logrotate.d/apache2
+    line: "\tcreate 644 root adm"
+    regexp: '^\s*create '
+  when: use_awstats
+- name: Allow all to read /var/log/apache2/access.log (required by awstats)
+  file:
+    path: /var/log/apache2/access.log
+    mode: 0644
+  when: use_awstats

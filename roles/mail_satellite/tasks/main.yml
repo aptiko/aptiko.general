@@ -1,0 +1,34 @@
+---
+- name: Install Postfix
+  apt:
+    name:
+      - postfix
+
+- name: Setup /etc/mailname
+  copy:
+    content: "{{ mailname }}"
+    dest: /etc/mailname
+  notify:
+    - Reload Postfix
+
+- name: Configure Postfix
+  template:
+    src: main.cf
+    dest: /etc/postfix/main.cf
+  notify:
+    - Reload Postfix
+
+- name: Start Postfix
+  service:
+    name: postfix
+    state: started
+
+- name: Set virtual aliases
+  lineinfile:
+    path: /etc/postfix/virtual
+    create: yes
+    regexp: "^{{ item.key }}@"
+    line: "{{ item.key }}@{{ mailname }} {{ item.value }}"
+  loop: "{{ mail_aliases | dict2items }}"
+  notify:
+    - Postmap aliases

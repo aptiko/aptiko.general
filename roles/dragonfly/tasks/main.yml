@@ -1,0 +1,92 @@
+---
+
+# Uninstall exim
+
+- name: Uninstall exim
+  apt: name=exim4-config state=absent
+
+- name: Remove exim configuration
+  file: path=/etc/exim4 state=absent
+
+- name: Remove exim spool directory
+  file: path=/var/spool/exim4 state=absent
+
+- name: Remove exim log directory
+  file: path=/var/log/exim4 state=absent
+
+# We compile if in stretch
+
+- name: Install apt packages needed to compile dma
+  apt:
+    name:
+      - build-essential
+      - byacc
+      - libssl-dev
+      - flex
+  when: ansible_distribution_release == "stretch"
+
+- name: Unpack dma source
+  unarchive:
+    src: https://github.com/corecode/dma/archive/v0.12.tar.gz
+    remote_src: yes
+    dest: /usr/src
+    creates: /usr/src/dma-0.12
+  when: ansible_distribution_release == "stretch"
+  notify:
+  - Compile dma
+
+- name: Create /etc/dma
+  file: path=/etc/dma state=directory
+  when: ansible_distribution_release == "stretch"
+
+- name: Install dma crontab
+  copy:
+    dest: /etc/cron.d/dma
+    content: |
+        # Flush the dma mail transfer agent's queue every five minutes.
+        #
+        */5 *   * * *   root    [ -x /usr/local/sbin/dma ] && /usr/local/sbin/dma -q1
+  when: ansible_distribution_release == "stretch"
+
+
+# We install from apt unless we are in stretch
+
+- name: Install DragonFly Mail Agent
+  apt: name=dma
+  when: ansible_distribution_release != "stretch"
+
+
+# The rest is the same for all distributions
+
+- name: Configure DragonFly Mail Agent
+  template: src=dma.conf dest=/etc/dma/dma.conf mode=0644
+
+- name: Check whether /etc/aliases exists
+  stat: path=/etc/aliases
+  register: etc_aliases
+
+- name: Create /etc/aliases if it doesn't exist
+  file: path=/etc/aliases state=touch
+  when: not etc_aliases.stat.exists
+
+- name: Set catch-all mail alias
+  lineinfile:
+    dest: /etc/aliases
+    regexp: '^\*:'
+    line: "*: {{ admins }}"
+
+- name: Configure DMA authentication
+  template:
+    src: auth.conf
+    dest: /etc/dma/auth.conf
+    mode: 0640
+    group: mail
+
+- name: Install Python 3 (required for custom sendmail script)
+  apt: name=python3
+
+- name: Install custom sendmail script
+  copy:
+    src: sendmail
+    dest: /usr/sbin/sendmail
+    mode: 0755

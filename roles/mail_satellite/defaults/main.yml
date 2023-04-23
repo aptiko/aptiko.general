@@ -1,0 +1,4 @@
+---
+smarthostport: 587
+masquerade_domains: null
+mail_aliases: {}

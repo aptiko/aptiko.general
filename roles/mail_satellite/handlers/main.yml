@@ -1,0 +1,6 @@
+---
+- name: Reload Postfix
+  command: postfix reload
+
+- name: Postmap aliases
+  command: postmap /etc/postfix/virtual

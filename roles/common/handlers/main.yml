@@ -1,0 +1,6 @@
+---
+- name: Restart ssh
+  service: name=ssh state=restarted
+
+- name: Reload ferm
+  service: name=ferm state=reloaded

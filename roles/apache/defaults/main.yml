@@ -1,0 +1,3 @@
+---
+use_awstats: true
+use_ferm: true

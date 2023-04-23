@@ -1,0 +1,5 @@
+---
+galaxy_info:
+  author: Antonis Christofides
+  description: Install MySQL on Debian/Ubuntu
+  license: GPLv3

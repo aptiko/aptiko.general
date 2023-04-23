@@ -1,0 +1,24 @@
+if [ -f /etc/bash.bashrc ]; then
+	. /etc/bash.bashrc
+fi
+if tty -s; then
+    {% if command_line_editing_mode|default(False) %}
+    set -o {{command_line_editing_mode}}
+    {% endif %}
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    blue=$(tput setaf 4)
+    reset=$(tput sgr0)
+    PS1='\[$red\]\u\[$reset\]@\[$green\]\h\[$reset\]:\[$blue\]\W\[$reset\]\$ '
+    alias ls="ls --color=always"
+fi
+unalias grep 2>/dev/null
+export LESSBINFMT=*n%c
+export LESS=-XR
+export EDITOR=vim
+unset PROMPT_COMMAND
+eval `dircolors`
+
+unset LANG
+export LC_CTYPE=en_US.UTF-8
+export LC_TIME=en_DK.UTF-8

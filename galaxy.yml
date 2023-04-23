@@ -1,0 +1,17 @@
+namespace: aptiko
+name: general
+version: 0.1.0.dev0
+readme: README.md
+authors:
+- Antonis Christofides <antonis@antonischristofides.com>
+description: Essential Ansible roles for Debian/Ubuntu servers
+license:
+- GPL-3.0-or-later
+tags: []
+dependencies: {}
+repository: https://github.com/aptiko/ansible.general
+documentation: https://ansible-aptiko-general.readthedocs.com
+homepage: https://github.com/aptiko/ansible.general
+issues: https://github.com/aptiko/ansible.general/issues/
+build_ignore: []
+

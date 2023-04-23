@@ -1,0 +1,159 @@
+---
+- name: Install Timescale keyring
+  copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
+  when: use_timescale
+
+- name: Set variables for Debian 11
+  set_fact:
+    postgresql_version: 13
+    timescale_apt_package: timescaledb-2-postgresql-13
+    postgis_apt_package: postgresql-13-postgis-3
+    postgis_scripts_apt_package: postgresql-13-postgis-3-scripts
+  when: ansible_distribution_release == "bullseye"
+
+- name: Set variables for Debian 10
+  set_fact:
+    postgresql_version: 11
+    timescale_apt_package: timescaledb-postgresql-11
+    postgis_apt_package: postgresql-11-postgis-2.5
+    postgis_scripts_apt_package: postgresql-11-postgis-2.5-scripts
+  when: ansible_distribution_release == "buster"
+
+- name: Set variables for Debian 9
+  set_fact:
+    postgresql_version: 9.6
+    postgis_apt_package: postgresql-9.6-postgis-2.3
+    postgis_scripts_apt_package: postgresql-9.6-postgis-2.3-scripts
+  when: ansible_distribution_release == "stretch"
+
+- name: Set variables for Ubuntu 22.04
+  set_fact:
+    postgresql_version: 14
+    postgis_apt_package: postgresql-14-postgis-3
+    postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
+    timescale_apt_package: timescaledb-2-postgresql-14
+  when: ansible_distribution_release == "jammy"
+
+- name: Set variables for Ubuntu 18.04
+  set_fact:
+    postgresql_version: 10
+    postgis_apt_package: postgresql-10-postgis-2.4
+    postgis_scripts_apt_package: postgresql-10-postgis-2.4-scripts
+  when: ansible_distribution_release == "bionic"
+
+- name: Setup Timescale repository
+  apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} main
+    state: present
+    update_cache: true
+  when: use_timescale
+
+- name: Install apt packages required for PostgreSQL
+  apt:
+    name:
+     - "postgresql-{{ postgresql_version }}"
+     - "{{ postgis_apt_package }}"
+     - "{{ postgis_scripts_apt_package }}"
+     - python3-psycopg2
+  environment:
+    LC_CTYPE: en_US.UTF-8
+
+- name: Install Timescale
+  apt: name={{ timescale_apt_package }}
+  when: use_timescale
+
+- name: Configure Timescale
+  lineinfile:
+    path: /etc/postgresql/{{ postgresql_version}}/main/postgresql.conf
+    line: "shared_preload_libraries = 'timescaledb'"
+  when: use_timescale
+  notify:
+   - Restart PostgreSQL
+
+- name: Install Greek unaccent rules
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/{{ postgresql_version }}/tsearch_data/unaccent.rules
+
+- name: Start PostgreSQL service
+  service: name=postgresql state=started enabled=true
+
+- name: Set pgpass file
+  copy:
+    dest: /root/.pgpass
+    mode: 0600
+    content: "localhost:5432:*:postgres:{{ postgres_password }}\n"
+
+- name: Check PostgreSQL password
+  command: psql -w -h localhost -U postgres -c "select 'dummy'" template1
+  register: check_postgres_password
+  ignore_errors: yes
+  check_mode: no
+  changed_when: False
+
+- name: Set PostgreSQL password
+  become: yes
+  become_user: postgres
+  command: psql template1 -c "ALTER USER postgres PASSWORD '{{ postgres_password }}'"
+  when: check_postgres_password.rc != 0
+
+- name: Create PostGIS template database
+  postgresql_db:
+    name: template_postgis
+    template: template0
+    encoding: UTF-8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+  become: yes
+  become_user: postgres
+
+- name: Check if PostGIS template database is setup
+  become: yes
+  become_user: postgres
+  command: psql -c "SELECT * FROM spatial_ref_sys LIMIT 1" template_postgis
+  register: check_postgis_template
+  ignore_errors: yes
+  check_mode: no
+  changed_when: False
+
+- name: Setup PostGIS template database
+  become: yes
+  become_user: postgres
+  shell: >
+    psql -c "CREATE LANGUAGE plpgsql" -d template_postgis;
+    psql -c "CREATE EXTENSION postgis;" template_postgis;
+    psql -c "UPDATE pg_database SET datistemplate='true'
+             WHERE datname='template_postgis'" template_postgis;
+    psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
+    psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
+
+- name: Backup PostgreSQL
+  copy:
+    content: |
+      #!/bin/bash
+      cd /
+      mkdir -p /var/backups/postgresql
+      chown postgres:postgres /var/backups/postgresql
+      databases=$(
+        sudo -u postgres \
+        psql -qtc "SELECT datname FROM pg_database WHERE datistemplate='f'"
+      )
+      for db in $databases; do
+        errfile=/var/backups/postgresql/$db.err
+        dumpfile=/var/backups/postgresql/$db.dump
+        sudo -u postgres /usr/bin/pg_dump -Fc -f $dumpfile $db 2>$errfile
+        if grep -q WARN $errfile || grep -q ERR $errfile; then
+          cat $errfile
+        fi
+      done
+    dest: /etc/duply/main/pre-scripts/postgres
+    mode: 0755
+  when: (duply_deactivate is not defined) or not duply_deactivate
+
+# Sometimes plays that are executed after this role (notable executing
+# "CREATE EXTENSION timescaledb") need PostgreSQL to have restarted in
+# order for some of the changes above to have occurred (notably
+# configuring Timescale). We therefore cannot defer restarting
+# PostgreSQL any more.
+- name: Flush handlers
+  meta: flush_handlers

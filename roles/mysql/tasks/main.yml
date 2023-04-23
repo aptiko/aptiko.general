@@ -1,0 +1,54 @@
+---
+
+- name: Install apt packages required for MySQL
+  apt:
+    name:
+      - mysql-server
+      - python3-pymysql
+
+- name: Configure mysql
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^\s*{{ item.key }}\s*(=|$)'
+    line: "{{ item.key }}{% if item.value is not none %} = {{ item.value }}{% endif %}"
+  loop: "{{ mysql_config | dict2items }}"
+  notify:
+    - Restart MySQL
+
+- name: Start MySQL
+  service:
+    name: mysql
+    state: started
+
+- name: Check whether mysql root password is set
+  become: yes
+  become_user: nobody
+  shell: echo '\q' | mysql --user=root --password={{ mysql_root_password }} mysql
+  register: connect_to_mysql_without_password
+  check_mode: no
+  ignore_errors: True
+  changed_when: False
+
+- name: Set mysql root password
+  shell: >
+    echo "UPDATE user SET plugin='mysql_native_password' WHERE User='root'; FLUSH PRIVILEGES; ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password}}'; FLUSH PRIVILEGES;"
+    | mysql --user=root mysql
+  when: "connect_to_mysql_without_password.rc == 1"
+
+- name: Create mysql user root@%
+  community.mysql.mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: "root"
+    host: "%"
+    plugin: "mysql_native_password"
+    password: "{{ mysql_root_password }}"
+    priv: "*.*:ALL,GRANT"
+    state: present
+
+- name: Allow MySQL firewall
+  lineinfile:
+    path: /etc/ferm/ansible-late
+    line: "proto tcp dport 3306 saddr ({{ mysql_allowed_client_ips }}) ACCEPT;"
+  notify: Reload ferm
+  when: mysql_allowed_client_ips

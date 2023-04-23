@@ -1,0 +1,70 @@
+---
+
+# Let's Encrypt
+
+- name: Check if letsencrypt certificate exists
+  stat:
+    path: /etc/letsencrypt/live/{{ server_name }}
+  register: letsencryptdir
+
+- name: Ensure ferm allows certbot
+  meta: flush_handlers
+
+- name: Install letsencrypt certificate
+  command: certbot certonly --apache --non-interactive --agree-tos -m {{ letsencrypt_admin }} -d {% if letsencrypt is sameas true %}{{ server_name }}{% else %}{{ letsencrypt }}{% endif %}
+  when: letsencrypt and not letsencryptdir.stat.exists
+
+# Site setup
+
+- name: Configuration file for {{ server_name }}
+  template: src=site.conf dest=/etc/apache2/sites-available/{{ server_name }}.conf
+  notify:
+  - Restart apache
+
+- name: Enable site {{ server_name }}
+  file:
+    state: link
+    src: /etc/apache2/sites-available/{{ server_name }}.conf
+    dest: /etc/apache2/sites-enabled/{{ server_name }}.conf
+  notify:
+  - Restart apache
+
+- name: Create snippets directory for {{ server_name }}
+  file: name=/etc/apache2/snippets/{{ server_name }} state=directory
+
+- name: Create directory /var/www/{{ server_name }}
+  file: state=directory dest=/var/www/{{ server_name }}
+
+# SSL other than Let's Encrypt
+
+- name: Install SSL certificate
+  copy:
+    content: '{{ cert }}{{ chain_certificates|default("")|join("") }}'
+    dest: /etc/apache2/certs/{{ server_name }}.chained.ssl.crt
+  when: cert is defined and cert
+  notify:
+  - Restart apache
+
+- name: Install SSL private key
+  copy: 
+    content: "{{ private_key }}"
+    dest: /etc/ssl/private/{{ server_name }}.ssl.key
+    mode: 640
+  when: private_key is defined and private_key
+  notify:
+  - Restart apache
+
+# Awstats
+
+- name: Setup awstats
+  template: src=awstats.site.conf dest=/etc/awstats/awstats.{{ server_name }}.conf
+  when: use_awstats | default(True)
+
+- name: Create awstats directory for {{ server_name }}
+  file:
+    state: directory
+    dest: /var/lib/awstats/{{ server_name }}
+    owner: www-data
+    group: www-data
+    mode: 0750
+  when: use_awstats | default(True)

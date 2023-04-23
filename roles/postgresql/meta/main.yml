@@ -1,0 +1,13 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: Antonis Christofides
+  description: Ansible role for installing PostgreSQL
+  license: GPLv3
+  platforms:
+  - name: Debian
+    versions:
+    - stretch
+    - buster
+    - bullseye
