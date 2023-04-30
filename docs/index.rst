@@ -4,6 +4,16 @@ aptiko.general Ansible collection
 A collection of modules to setup apache, databases, backup and
 email on Debian.
 
+Installation
+------------
+
+::
+
+    ansible-galaxy collection install git+https://github.com/aptiko/aptiko.general.git
+
+Reference
+---------
+
 .. toctree::
    common
    duply
