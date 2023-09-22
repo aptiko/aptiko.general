@@ -126,6 +126,7 @@
              WHERE datname='template_postgis'" template_postgis;
     psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
     psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
+  when: check_postgis_template.rc != 0
 
 - name: Backup PostgreSQL
   copy:
