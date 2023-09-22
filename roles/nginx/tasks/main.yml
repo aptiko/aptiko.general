@@ -1,0 +1,36 @@
+---
+- name: Install apt packages for nginx
+  apt:
+    name:
+      - nginx
+      - ssl-cert
+      - certbot
+      - python3-certbot-nginx
+
+- name: Ensure /etc/aliases exists
+  file:
+    path: /etc/aliases
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+
+- name: Set www-data mail alias
+  lineinfile:
+    dest: /etc/aliases
+    line: "www-data: root"
+    regexp: "^www-data:.*$"
+
+- name: Nginx default site
+  template: src=default-site.conf dest=/etc/nginx/sites-available/default
+  notify:
+  - Reload nginx
+
+- name: Create /var/www
+  file: state=directory dest=/var/www
+
+- name: Allow firewall
+  lineinfile:
+    path: /etc/ferm/ansible-late
+    line: "proto tcp dport (http https) ACCEPT;"
+  notify: Reload ferm
+  when: use_ferm

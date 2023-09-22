@@ -19,10 +19,9 @@ Parameters
 ==========
 
 use_ferm
-  If ``true``, it drops a configuration snippet in
+  If ``true`` (the default), it drops a configuration snippet in
   :file:`/etc/ferm/ansible-late` in order to allow connections to ports
   80 and 443.  In this case you must also use the :ref:`common` role.
-  The default is ``true`` for backwards compatibility reasons.
 
 use_awstats
   If ``true``, it installs and configures awstats. The default is

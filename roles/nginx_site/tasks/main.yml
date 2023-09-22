@@ -1,0 +1,36 @@
+---
+
+# Let's Encrypt
+
+- name: Check if letsencrypt certificate exists
+  stat:
+    path: /etc/letsencrypt/live/{{ server_name }}
+  register: letsencryptdir
+
+- name: Ensure ferm allows certbot
+  meta: flush_handlers
+
+- name: Install letsencrypt certificate
+  command: certbot certonly --nginx --non-interactive --agree-tos -m {{ letsencrypt_admin }} -d {% if letsencrypt is sameas true %}{{ server_name }}{% else %}{{ letsencrypt }}{% endif %}
+  when: letsencrypt and not letsencryptdir.stat.exists
+
+# Site setup
+
+- name: Configuration file for {{ server_name }}
+  template: src=site.conf dest=/etc/nginx/sites-available/{{ server_name }}.conf
+  notify:
+  - Reload nginx 
+
+- name: Enable site {{ server_name }}
+  file: 
+    state: link
+    src: /etc/nginx/sites-available/{{ server_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ server_name }}.conf
+  notify:
+  - Reload nginx
+
+- name: Create snippets directory for {{ server_name }}
+  file: name=/etc/nginx/snippets/{{ server_name }} state=directory
+
+- name: Create directory /var/www/{{ server_name }}
+  file: state=directory dest=/var/www/{{ server_name }}
