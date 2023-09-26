@@ -37,6 +37,10 @@ smarthost
 smarthostport
   The smarthost port, such as 25 or 587 (the default).
 
+smarthostusername, smarthostpassword
+  The username and password to connect to the smart host. If unspecified
+  it will be connecting unauthenticated.
+
 masquerade_domains
   Optional. This will be used as Postfix's masquerade_domains_
   parameter.  For example, if ``mailname`` is

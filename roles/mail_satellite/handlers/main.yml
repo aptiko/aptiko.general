@@ -4,3 +4,6 @@
 
 - name: Postmap aliases
   command: postmap /etc/postfix/virtual
+
+- name: Compile sasl_passwd
+  command: postmap /etc/postfix/sasl_passwd
