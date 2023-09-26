@@ -22,7 +22,7 @@
   template:
     src: sasl_passwd
     dest: /etc/postfix/sasl_passwd
-  when: "{{ smarthostusername }}"
+  when: smarthostusername
   notify:
     - Compile sasl_passwd
 
