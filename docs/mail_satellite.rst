@@ -35,7 +35,8 @@ smarthost
   The smart host, such as ``relay.example.com``.
 
 smarthostport
-  The smarthost port, such as 25 or 587 (the default).
+  The smarthost port, such as 25 or 587 (the default). If the outgoing
+  port is 465 or 587, encrypted connections are forced.
 
 smarthostusername, smarthostpassword
   The username and password to connect to the smart host. If unspecified

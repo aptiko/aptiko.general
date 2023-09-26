@@ -6,6 +6,14 @@ mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
 inet_interfaces = loopback-only
 virtual_alias_maps = hash:/etc/postfix/virtual
 masquerade_domains = {{ masquerade_domains }}
+{% if smarthostport == 465 %}
+smtp_tls_wrappermode = yes
+smtp_tls_security_level = encrypt
+{% endif %}
+{% if smarthostport == 587 %}
+smtp_tls_note_starttls_offer = yes
+smtp_tls_security_level = encrypt
+{% endif %}
 {% if smarthostusername %}
 smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
