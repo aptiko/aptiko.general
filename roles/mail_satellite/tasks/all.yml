@@ -22,6 +22,7 @@
   template:
     src: sasl_passwd
     dest: /etc/postfix/sasl_passwd
+    mode: 0600
   when: smarthostusername
   notify:
     - Compile sasl_passwd
