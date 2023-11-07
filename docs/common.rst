@@ -26,6 +26,17 @@ root_authorized_keys
   authorized_keys. If unspecified, the root's authorized keys are not
   touched.
 
+ssh_port
+  Optional. The port on which the ssh server will be listening. The
+  default is 22. If this is changed, you will then need to reconfigure
+  Ansible so that, in next runs, it connects to the new port.
+
+ssh_allowed_ip_addresses
+  Optional. A list of IP addresses or networks from which access to ssh
+  will be allowed. The list can includes both IPv4 and IPv6 addresses
+  and networks. The default is to allow access to all addresses. This
+  affects the configuration of the firewall.
+
 command_line_editing_mode
   Optional. Set it to "vi" to enable vi editing mode in bash.
 

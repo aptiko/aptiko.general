@@ -62,7 +62,14 @@
     dest: /etc/ssh/sshd_config
     regexp: ^PermitRootLogin
     line: PermitRootLogin without-password
-  notify: Restart ssh
+  notify: Reload ssh
+
+- name: Configure ssh port
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: ^#?Port
+    line: Port {{ ssh_port }}
+  notify: Reload ssh
 
 # Root .bashrc and .profile
 
