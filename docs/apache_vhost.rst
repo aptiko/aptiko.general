@@ -79,9 +79,37 @@ force_ssl
   ``true``, ``cert`` or ``letsencrypt`` must be specified.
 
 use_awstats
-  If ``true``, it also configures awstats. The default is ``true`` for
-  backwards compatibility reasons.
+  If ``true``, it also configures awstats, which becomes available at
+  ``/awstats/``.. The default is ``true`` for backwards compatibility
+  reasons.
 
-awstats_allow_from
-  IPs or subnets from which access to awstats is going to be allowed, in
-  addition to the localhost. By default this is empty.
+awstats_auth_type
+  To visit awstats, the user must authenticate. The default
+  authentication type is ``Basic``, but can be changed to something
+  else, like ``Shibboleth`` or whatever else is supported by Apache. If
+  extra Apache modules are required to support this authentication type,
+  you must install them separately.
+
+awstats_users
+  A list of usernames and passwords that are allowed to visit awstats.
+  Specify like this::
+
+    awstats_users:
+     - username: alice
+       password: topsecret1
+     - username: bob
+       password: topsecret2
+
+  The ``password`` must only be specified if using ``Basic``
+  authentication. In that case, the htpasswd file with these usernames
+  and passwords is set up accordingly.
+
+  If using any authentication other than ``Basic``, only specify the
+  username. The authentication system is considered external, so you
+  need to set it up separately.
+
+awstats_extra_apache_config
+  The appropriate ``Location`` block is set up with ``AuthType``,
+  ``AuthName``, ``Require user``, and, in ``Basic`` authentication,
+  ``AuthUserFile``. If you need any other directives, add them to this
+  parameter, which by default is empty.

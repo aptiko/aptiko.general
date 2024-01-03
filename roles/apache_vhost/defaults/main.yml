@@ -1,3 +1,7 @@
 ---
 letsencrypt: false
 force_ssl: false
+use_awstats: True
+awstats_auth_type: Basic
+awstats_users: []
+awstats_extra_apache_config: ""
