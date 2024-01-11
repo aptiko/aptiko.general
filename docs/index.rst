@@ -41,6 +41,11 @@ Reference
    :caption: Database roles:
 
 .. toctree::
+   node
+   :maxdepth: 1
+   :caption: Miscellaneous roles:
+
+.. toctree::
    copyright
    :maxdepth: 1
    :caption: Miscellaneous:
