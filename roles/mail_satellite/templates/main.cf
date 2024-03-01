@@ -2,8 +2,8 @@ myorigin = /etc/mailname
 biff = no
 compatibility_level = 3
 relayhost = [{{ smarthost }}]:{{ smarthostport }}
-mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
-inet_interfaces = loopback-only
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 {{ mynetworks }}
+inet_interfaces = {{ inet_interfaces }}
 virtual_alias_maps = hash:/etc/postfix/virtual
 masquerade_domains = {{ masquerade_domains }}
 {% if smarthostport == 465 %}

@@ -8,8 +8,8 @@ Overview
 ========
 
 Installs and configures a mail server so that it's possible to send
-emails either through port 25 (listening on the local interface only) or
-by executing the ``sendmail`` command. All email is sent using a
+emails either through port 25 or by executing the ``sendmail`` command.
+All email is sent using a
 smarthost.
 
 It's mainly useful in two cases:
@@ -66,3 +66,25 @@ mail_aliases
   virtual_alias_maps_ instead.
 
   .. _virtual_alias_maps: http://www.postfix.org/postconf.5.html#virtual_alias_maps
+
+inet_interfaces
+  If ``loopback-only`` (the default), it listens only on the local
+  interface. Change it to ``all`` (or any value accepted by the postfix
+  ``inet_interfaces`` parameter) so that it listens on all interfaces.
+  In that case, you need to care about the firewall yourself. For
+  example, assuming you use the :ref:`common` firewall::
+
+    - name: Allow smtp through firewall
+      lineinfile:
+        path: /etc/ferm/ansible-late
+        line: "proto tcp dport smtp saddr (1.2.3.4 5.6.7.8) ACCEPT;"
+      notify: Reload ferm
+
+  You also need to set ``my_networks``.
+
+mynetworks
+  The networks that are allowed to relay. If unset, only the localhost
+  from the local interface is allowed to send emails. If you set it,
+  don't specify the localhost, this will be included anyway.
+
+  See also ``inet_interfaces``.
