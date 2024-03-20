@@ -41,3 +41,6 @@ mysql_allowed_client_ips
   The default is an empty string. If not an empty string, a ferm rule is
   added to allow mysql clients to connect to port 3306.  It should be a
   space-separated string of ip addresses.
+
+prometheus_server_ips
+  See the :ref:`prometheus` role.

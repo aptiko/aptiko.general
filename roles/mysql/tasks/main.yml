@@ -52,3 +52,34 @@
     line: "proto tcp dport 3306 saddr ({{ mysql_allowed_client_ips }}) ACCEPT;"
   notify: Reload ferm
   when: mysql_allowed_client_ips
+
+- name: Create prometheus database user
+  community.mysql.mysql_user:
+    name: prometheus
+    password: "{{ mysql_prometheus_password }}"
+    priv: '*.*:PROCESS,REPLICATION CLIENT,SELECT'
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  when: prometheus_server_ips|default(False)
+
+- name: Install prometheus-mysqld-exporter
+  apt:
+    name:
+     - prometheus-mysqld-exporter
+  when: prometheus_server_ips|default(False)
+
+- name: Configure prometheus-mysqld-exporter username
+  lineinfile:
+    path: /etc/default/prometheus-mysqld-exporter
+    regexp: '^ARGS\s*='
+    line: 'ARGS="--mysqld.username=prometheus"'
+  notify: Restart prometheus-mysqld-exporter
+  when: prometheus_server_ips|default(False)
+
+- name: Configure prometheus-mysqld-exporter password
+  lineinfile:
+    path: /etc/default/prometheus-mysqld-exporter
+    regexp: '^MYSQLD_EXPORTER_PASSWORD\s*='
+    line: 'MYSQLD_EXPORTER_PASSWORD="{{ mysql_prometheus_password }}"'
+  notify: Restart prometheus-mysqld-exporter
+  when: prometheus_server_ips|default(False)

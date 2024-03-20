@@ -1,3 +1,5 @@
+.. _postgresql:
+
 ==========
 postgresql
 ==========
@@ -22,3 +24,6 @@ postgres_password
   The password of the ``postgres`` database user.  Store this in the
   vault. The role sets the ``postgres`` database user to have this
   password.
+
+prometheus_server_ips
+  See the :ref:`prometheus` role.

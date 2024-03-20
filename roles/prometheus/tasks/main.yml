@@ -1,0 +1,33 @@
+---
+
+- name: Import Grafana GPG key
+  ansible.builtin.apt_key:
+    url: https://packages.grafana.com/gpg.key
+
+- name: Add Grafana repository
+  ansible.builtin.apt_repository:
+    repo: 'deb https://apt.grafana.com stable main'
+    filename: 'grafana'
+
+- name: Install packages required for Prometheus
+  apt:
+    name:
+     - prometheus
+     - grafana
+    update_cache: yes
+  notify:
+   - Set Grafana password
+
+- name: Configure Prometheus
+  template:
+    src: prometheus.yml
+    dest: /etc/prometheus/prometheus.yml
+  notify:
+    - Restart Prometheus
+
+- name: Configure Apache for Grafana
+  template:
+    src: apache-grafana.conf
+    dest: /etc/apache2/snippets/{{ prometheus_server_name }}/grafana.conf
+  notify:
+   - Reload apache

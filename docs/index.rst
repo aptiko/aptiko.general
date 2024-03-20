@@ -42,6 +42,7 @@ Reference
 
 .. toctree::
    node
+   prometheus
    :maxdepth: 1
    :caption: Miscellaneous roles:
 

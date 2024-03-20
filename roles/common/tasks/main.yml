@@ -103,3 +103,18 @@
     dest: /etc/ferm/ansible-late
     force: no
     content: ""
+
+# Node exporter
+
+- name: Install node-exporter
+  apt:
+    name:
+     - prometheus-node-exporter
+  when: prometheus_server_ips|default(False)
+
+- name: Allow Prometheus through firewall
+  lineinfile:
+    path: "/etc/ferm/ansible-late"
+    line: "proto tcp saddr ({{ prometheus_server_ips }}) ACCEPT;"
+  notify: Reload ferm
+  when: prometheus_server_ips|default(False)

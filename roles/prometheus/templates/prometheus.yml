@@ -1,0 +1,11 @@
+global:
+  scrape_interval:     60s
+  evaluation_interval: 60s
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ['localhost:9093']
+
+scrape_configs:
+  {{ prometheus_scrape_configs | to_yaml | indent(2) }}

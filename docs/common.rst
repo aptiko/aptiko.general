@@ -40,6 +40,9 @@ ssh_allowed_ip_addresses
 command_line_editing_mode
   Optional. Set it to "vi" to enable vi editing mode in bash.
 
+prometheus_server_ips
+  See the :ref:`prometheus` role.
+
 Firewall
 ========
 

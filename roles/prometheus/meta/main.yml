@@ -1,0 +1,10 @@
+---
+
+dependencies:
+
+- role: aptiko.general.apache_vhost
+  server_name: "{{ prometheus_server_name }}"
+  ssl_extras: |
+      SSLProxyEngine on
+  letsencrypt: true
+  force_ssl: yes

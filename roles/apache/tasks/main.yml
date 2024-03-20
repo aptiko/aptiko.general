@@ -38,6 +38,7 @@
     - apache2
     - certbot
     - python3-certbot-apache
+    - ssl-cert
     - acl
 
 - name: Install awstats
