@@ -33,6 +33,13 @@ prometheus_server_ips
   exporter; and so on), and they allow these addresses through the
   firewall.
 
+prometheus_alertmanager_config
+  The alertmanager configuration (it will go to ``alertmanager.yml``).
+
+prometheus_alert_rules
+  Configuration of the alerting rules (it will go to
+  ``alert_rules.yml``).
+
 Example
 =======
 
@@ -66,3 +73,36 @@ Example
           static_configs:
             - targets:
               - host2.example.com:9104
+      prometheus_alertmanager_config:
+        global:
+          smtp_smarthost: 'localhost:25'
+          smtp_from: 'noreply@example.com'
+          smtp_require_tls: false
+        templates:
+        - '/etc/prometheus/alertmanager_templates/*.tmpl'
+        route:
+          group_by: ['alertname', 'cluster', 'service']
+          group_wait: 60s
+          group_interval: 10m
+          repeat_interval: 3h
+          receiver: email
+          routes:
+            - match_re:
+                severity: '.*'
+              receiver: email
+        receivers:
+        - name: 'email'
+          email_configs:
+          - to: 'sysadmin+prometheus@example.com'
+            send_resolved: true
+      prometheus_alert_rules:
+        groups:
+          - name: Machine down
+            rules:
+              - alert: Host down
+                expr: up == 0
+                for: 1m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: Instance {{ "{{ " }} $labels.instance {{ "}}" }} is down"

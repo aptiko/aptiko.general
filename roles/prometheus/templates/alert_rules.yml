@@ -1,0 +1,1 @@
+{{ prometheus_alert_rules | to_yaml }}

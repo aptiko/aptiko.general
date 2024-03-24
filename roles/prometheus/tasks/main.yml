@@ -13,6 +13,7 @@
   apt:
     name:
      - prometheus
+     - prometheus-alertmanager
      - grafana
     update_cache: yes
   notify:
@@ -24,6 +25,28 @@
     dest: /etc/prometheus/prometheus.yml
   notify:
     - Restart Prometheus
+
+- name: Configure alert rules
+  template:
+    src: alert_rules.yml
+    dest: /etc/prometheus/alert_rules.yml
+  notify:
+    - Restart Prometheus
+
+- name: Configure alertmanager
+  template:
+    src: alertmanager.yml
+    dest: /etc/prometheus/alertmanager.yml
+  notify:
+    - Restart alertmanager
+
+- name: Configure alertmanager advertise address
+  copy:
+    dest: /etc/default/prometheus-alertmanager
+    content: |
+      ARGS="--cluster.advertise-address={{ ansible_default_ipv4.address }}:9093"
+  notify:
+    - Restart alertmanager
 
 - name: Configure Apache for Grafana
   template:

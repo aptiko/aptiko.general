@@ -15,3 +15,8 @@
   service:
     name: prometheus
     state: restarted
+
+- name: Restart alertmanager
+  service:
+    name: prometheus-alertmanager
+    state: restarted
