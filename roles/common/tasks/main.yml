@@ -104,6 +104,12 @@
     force: no
     content: ""
 
+- name: Configure systemd-journald
+  template:
+    src: journald.conf
+    dest: /etc/systemd/journald.conf
+  notify: Restart journald
+
 # Node exporter
 
 - name: Install node-exporter

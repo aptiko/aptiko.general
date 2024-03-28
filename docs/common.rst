@@ -43,6 +43,11 @@ command_line_editing_mode
 prometheus_server_ips
   See the :ref:`prometheus` role.
 
+forward_journal_to_syslog
+  By default, Debian systems forward journal entries to syslog, so they
+  are duplicated in :file:`/var/log/syslog`. Setting this to ``false``
+  deactivates this. The default is ``true``.
+
 Firewall
 ========
 
