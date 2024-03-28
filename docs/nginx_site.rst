@@ -1,7 +1,7 @@
 .. _nginx_site:
 
 ==========
-nginx-site
+nginx_site
 ==========
 
 Overview
@@ -12,7 +12,7 @@ which on nginx also have the unfortunate name "servers") on Debian or
 Ubuntu.  It depends on :ref:`nginx`, which must also be listed as a role
 for the server. The minimal way to use it is this::
 
-  - role: nginx-site
+  - role: nginx_site
     server_name: example.org
 
 but the most usual will be like this::
