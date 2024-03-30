@@ -9,7 +9,6 @@
     timescale_apt_package: timescaledb-2-postgresql-15
     postgis_apt_package: postgresql-15-postgis-3
     postgis_scripts_apt_package: postgresql-15-postgis-3-scripts
-    prometheus_postgresql_exporter_package: prometheus-postgres-exporter
   when: ansible_distribution_release == "bookworm"
 
 - name: Set variables for Debian 11
@@ -18,7 +17,6 @@
     timescale_apt_package: timescaledb-2-postgresql-13
     postgis_apt_package: postgresql-13-postgis-3
     postgis_scripts_apt_package: postgresql-13-postgis-3-scripts
-    prometheus_postgresql_exporter_package: prometheus-postgres-exporter
   when: ansible_distribution_release == "bullseye"
 
 - name: Set variables for Debian 10
@@ -42,7 +40,6 @@
     postgis_apt_package: postgresql-14-postgis-3
     postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
     timescale_apt_package: timescaledb-2-postgresql-14
-    prometheus_postgresql_exporter_package: prometheus-postgres-exporter
   when: ansible_distribution_release == "jammy"
 
 - name: Set variables for Ubuntu 18.04
@@ -162,11 +159,30 @@
     mode: 0755
   when: (duply_deactivate is not defined) or not duply_deactivate
 
-- name: Install prometheus-postgresql-exporter
+- name: Install prometheus-postgres-exporter
   apt:
     name:
-     - "{{ prometheus_postgresql_exporter_package }}"
+     - prometheus-postgres-exporter
   when: prometheus_server_ips|default(False)
+
+- name: Create database user prometheus
+  become: yes
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    db: postgres
+    login_user: postgres
+    login_password: "{{ postgres_password }}"
+    name: prometheus
+    password: "{{ postgres_password }}"
+    role_attr_flags: SUPERUSER
+  notify: Restart prometheus-postgres-exporter
+
+- name: Configure prometheus-postgres-exporter
+  lineinfile:
+    path: /etc/default/prometheus-postgres-exporter
+    regexp: '^DATA_SOURCE_NAME\s*='
+    line: "DATA_SOURCE_NAME='user=prometheus host=/run/postgresql dbname=postgres'"
+  notify: Restart prometheus-postgres-exporter
 
 # Sometimes plays that are executed after this role (notable executing
 # "CREATE EXTENSION timescaledb") need PostgreSQL to have restarted in

@@ -1,3 +1,10 @@
 ---
 - name: Restart PostgreSQL
-  service: name=postgresql state=restarted
+  service:
+    name: postgresql
+    state: restarted
+
+- name: Restart prometheus-postgres-exporter
+  service:
+    name: prometheus-postgres-exporter
+    state: restarted
