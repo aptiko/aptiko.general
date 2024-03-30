@@ -3,6 +3,15 @@
   copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
   when: use_timescale
 
+- name: Set variables for Debian 12
+  set_fact:
+    postgresql_version: 15
+    timescale_apt_package: timescaledb-2-postgresql-15
+    postgis_apt_package: postgresql-15-postgis-3
+    postgis_scripts_apt_package: postgresql-15-postgis-3-scripts
+    prometheus_postgresql_exporter_package: prometheus-postgres-exporter
+  when: ansible_distribution_release == "bookworm"
+
 - name: Set variables for Debian 11
   set_fact:
     postgresql_version: 13
