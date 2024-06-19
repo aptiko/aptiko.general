@@ -130,6 +130,7 @@
   shell: >
     psql -c "CREATE LANGUAGE plpgsql" -d template_postgis;
     psql -c "CREATE EXTENSION postgis;" template_postgis;
+    psql -c "CREATE EXTENSION postgis_raster;" template_postgis;
     psql -c "UPDATE pg_database SET datistemplate='true'
              WHERE datname='template_postgis'" template_postgis;
     psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
