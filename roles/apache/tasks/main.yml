@@ -15,7 +15,6 @@
 - name: Remove group fcgiwrap
   group: state=absent name=fcgiwrap
 
-
 # Does a /var/log/nginx directory exist? If yes, move it to /var/log/apache2,
 # so that apache will pick up where nginx left off and awstats won't have a
 # gap.
@@ -38,15 +37,12 @@
     - apache2
     - certbot
     - python3-certbot-apache
+    - python3-certbot-dns-cloudflare
     - ssl-cert
     - acl
 
-- name: Install awstats
-  become: yes
-  apt:
-    name:
-    - awstats
-  when: use_awstats
+- include_tasks: default_site_cert.yml
+  when: apache_default_site_letsencrypt_server_name
 
 - name: Apache default site
   template:
@@ -55,8 +51,18 @@
   notify:
   - Restart apache
 
-- name: Remove apache default-ssl.conf
-  file: state=absent path=/etc/apache2/sites-available/default-ssl.conf
+- name: Create snippets directory
+  file: name=/etc/apache2/snippets state=directory
+
+- name: Create snippets directory for default site
+  file: name=/etc/apache2/snippets/default-site state=directory
+
+- name: Apache default site main snippet
+  template:
+    src: default-site-main-snippet.conf
+    dest: /etc/apache2/snippets/default-site/main.conf
+  notify:
+  - Restart apache
 
 - name: Enable mod_proxy
   apache2_module: name=proxy state=present
@@ -134,10 +140,6 @@
   notify:
   - Restart apache
 
-# Configuration snippets directory
-- name: Create snippets directory
-  file: name=/etc/apache2/snippets state=directory
-
 # Deactivate other-vhosts-access-log
 - name: Check if other-vhosts-access-log is enabled
   shell: test -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
@@ -156,35 +158,7 @@
     path: /etc/ferm/ansible-late
     line: "proto tcp dport (http https) ACCEPT;"
   notify: Reload ferm
-  when: use_ferm
+  when: apache_use_ferm
 
-# Awstats
-- name: Awstats global configuration file
-  copy: src=awstats.conf.local dest=/etc/awstats/awstats.conf.local
-  when: use_awstats
-- name: Disable awstats static pages
-  lineinfile: >
-    dest=/etc/default/awstats
-    backrefs=yes
-    regexp='^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
-    line='AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
-  when: use_awstats
-- name: Allow www-data group to read /var/log/apache2 (required by awstats)
-  acl:
-    name: /var/log/apache2
-    state: present
-    etype: group
-    entity: www-data
-    permissions: rx
-  when: use_awstats
-- name: Allow all to read new files in /var/log/apache2 (required by awstats)
-  lineinfile:
-    dest: /etc/logrotate.d/apache2
-    line: "\tcreate 644 root adm"
-    regexp: '^\s*create '
-  when: use_awstats
-- name: Allow all to read /var/log/apache2/access.log (required by awstats)
-  file:
-    path: /var/log/apache2/access.log
-    mode: 0644
-  when: use_awstats
+- include_tasks: awstats.yml
+  when: apache_use_awstats

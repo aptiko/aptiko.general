@@ -1,0 +1,24 @@
+---
+
+- name: Configure certbot
+  template:
+    owner: root
+    mode: 0600
+    src: certbot-credentials-cloudflare.ini
+    dest: /etc/letsencrypt/certbot-credentials-cloudflare.ini
+
+- name: Check if letsencrypt certificate exists
+  stat:
+    path: /etc/letsencrypt/live/{{ apache_default_site_letsencrypt_server_name | regex_replace('^\*\.', '') }}
+  register: letsencryptdir
+
+- name: Ensure ferm allows certbot
+  meta: flush_handlers
+
+- name: Install letsencrypt certificate
+  command: >
+    certbot certonly --non-interactive --agree-tos --dns-cloudflare
+    --dns-cloudflare-credentials /etc/letsencrypt/certbot-credentials-cloudflare.ini
+    -m {{ letsencrypt_admin }} -d {{ apache_default_site_letsencrypt_server_name }}
+  when: not letsencryptdir.stat.exists
+

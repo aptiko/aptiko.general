@@ -1,3 +1,11 @@
 ---
-use_awstats: true
-use_ferm: true
+apache_use_awstats: "{{ use_awstats|default(true) }}"
+apache_use_ferm: "{{ use_ferm|default(true) }}"
+apache_awstats_domains: []
+apache_default_site_awstats_auth_type: "Basic"
+apache_default_site_awstats_users: []
+apache_default_site_awstats_extra_apache_config: ""
+apache_default_site_document_root: "/var/www/html"
+apache_default_site_extras: "Redirect 404 /"
+apache_default_site_letsencrypt_server_name: false
+apache_default_site_force_ssl: false

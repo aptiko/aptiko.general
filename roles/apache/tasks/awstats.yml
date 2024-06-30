@@ -1,0 +1,60 @@
+---
+
+- name: Install apt packages required for awstats
+  apt:
+    name:
+    - awstats
+    - python3-passlib
+
+- name: Awstats global configuration file
+  copy: src=awstats.conf.local dest=/etc/awstats/awstats.conf.local
+
+- name: Disable awstats static pages
+  lineinfile: >
+    dest=/etc/default/awstats
+    backrefs=yes
+    regexp='^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
+    line='AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
+
+- name: Allow www-data group to read /var/log/apache2 (required by awstats)
+  acl:
+    name: /var/log/apache2
+    state: present
+    etype: group
+    entity: www-data
+    permissions: rx
+
+- name: Allow all to read new files in /var/log/apache2 (required by awstats)
+  lineinfile:
+    dest: /etc/logrotate.d/apache2
+    line: "\tcreate 644 root adm"
+    regexp: '^\s*create '
+
+- name: Allow all to read /var/log/apache2/access.log (required by awstats)
+  file:
+    path: /var/log/apache2/access.log
+    mode: 0644
+
+- name: Setup awstats
+  template: src=awstats.site.conf dest=/etc/awstats/awstats.{{ item }}.conf
+  loop: {{ apache_awstats_domains }}
+
+- name: Create awstats directories
+  file:
+    state: directory
+    dest: /var/lib/awstats/{{ item }}
+    owner: www-data
+    group: www-data
+    mode: 0750
+  loop: {{ apache_awstats_domains }}
+
+- name: Setup awstats users
+  community.general.htpasswd:
+    path: /etc/apache2/awstats-global.htpasswd
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    owner: root
+    group: www-data
+    mode: 0640
+  when: apache_default_site_awstats_auth_type == "Basic"
+  loop: "{{ apache_default_site_awstats_users }}"
