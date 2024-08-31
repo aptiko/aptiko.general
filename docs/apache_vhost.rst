@@ -78,23 +78,27 @@ force_ssl
   non-ssl version will redirect to the ssl version. If ``force_ssl`` is
   ``true``, ``cert`` or ``letsencrypt`` must be specified.
 
-use_awstats
+apache_use_awstats
   If ``true``, it also configures awstats, which becomes available at
-  ``/awstats/``.. The default is ``true`` for backwards compatibility
+  ``/awstats/``. The default is ``true`` for backwards compatibility
   reasons.
 
-awstats_auth_type
+  ``use_awstats`` is a deprecated alias for this parameter.
+
+apache_awstats_auth_type
   To visit awstats, the user must authenticate. The default
   authentication type is ``Basic``, but can be changed to something
   else, like ``Shibboleth`` or whatever else is supported by Apache. If
   extra Apache modules are required to support this authentication type,
   you must install them separately.
 
-awstats_users
+  ``awstats_auth_type`` is a deprecated alias for this parameter.
+
+apache_awstats_users
   A list of usernames and passwords that are allowed to visit awstats.
   Specify like this::
 
-    awstats_users:
+    apache_awstats_users:
      - username: alice
        password: topsecret1
      - username: bob
@@ -108,8 +112,12 @@ awstats_users
   username. The authentication system is considered external, so you
   need to set it up separately.
 
-awstats_extra_apache_config
+  ``auth_type`` is a deprecated alias for this parameter.
+
+apache_awstats_extra_apache_config
   The appropriate ``Location`` block is set up with ``AuthType``,
   ``AuthName``, ``Require user``, and, in ``Basic`` authentication,
   ``AuthUserFile``. If you need any other directives, add them to this
   parameter, which by default is empty.
+
+  ``awstats_extra_apache_config`` is a deprecated alias for this parameter.

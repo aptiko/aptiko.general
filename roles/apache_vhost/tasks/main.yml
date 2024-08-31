@@ -56,9 +56,23 @@
 
 # Awstats
 
+# If apache_use_awstats is false for the "apache" role but unspecified
+# (i.e.  true) for the vhost, then there's a problem because it tries to
+# configure awstats for the vhost although it's not enabled for apache.
+# We use the existence of /etc/awstats as a proxy for apache_use_awstats
+# of the "apache" role; if absent, it means awstats isn't configured for
+# apache, thus we don't configure the vhost either.
+- name: Check if /etc/awstats exists
+  ansible.builtin.stat:
+    path: /etc/awstats
+  register: awstats_config_dir
+  ignore_errors: yes
+  check_mode: no
+  changed_when: False
+
 - name: Setup awstats
   template: src=awstats.site.conf dest=/etc/awstats/awstats.{{ server_name }}.conf
-  when: use_awstats
+  when: apache_use_awstats and awstats_config_dir.stat.exists
 
 - name: Create awstats directory for {{ server_name }}
   file:
@@ -67,12 +81,12 @@
     owner: www-data
     group: www-data
     mode: 0750
-  when: use_awstats
+  when: apache_use_awstats and awstats_config_dir.stat.exists
 
 - name: Install passlib
   apt:
     name: python3-passlib
-  when: use_awstats
+  when: apache_use_awstats and awstats_config_dir.stat.exists
 
 - name: Setup awstats users
   community.general.htpasswd:
@@ -82,5 +96,5 @@
     owner: root
     group: www-data
     mode: 0640
-  when: use_awstats and awstats_auth_type == "Basic"
-  loop: "{{ awstats_users }}"
+  when: apache_use_awstats and apache_awstats_auth_type == "Basic" and awstats_config_dir.stat.exists
+  loop: "{{ apache_awstats_users }}"

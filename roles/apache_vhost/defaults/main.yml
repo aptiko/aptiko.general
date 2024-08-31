@@ -1,7 +1,7 @@
 ---
 letsencrypt: false
 force_ssl: false
-use_awstats: True
-awstats_auth_type: Basic
-awstats_users: []
-awstats_extra_apache_config: ""
+apache_use_awstats: "{{ use_awstats|default(true) }}"
+apache_awstats_auth_type: "{{ awstats_auth_type|default('Basic') }}"
+apache_awstats_users: "{{ awstats_users|default([]) }}"
+apache_awstats_extra_apache_config: "{{ awstats_extra_apache_config|default('') }}"
