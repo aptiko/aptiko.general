@@ -160,8 +160,5 @@
   notify: Reload ferm
   when: apache_use_ferm
 
-- debug:
-    msg: "{{ apache_use_awstats }}"
-
 - include_tasks: awstats.yml
   when: apache_use_awstats

@@ -36,8 +36,10 @@
     mode: 0644
 
 - name: Setup awstats
-  template: src=awstats.site.conf dest=/etc/awstats/awstats.{{ item }}.conf
-  loop: {{ apache_awstats_domains }}
+  template:
+    src: awstats.site.conf
+    dest: /etc/awstats/awstats.{{ item }}.conf
+  loop: "{{ apache_awstats_domains }}"
 
 - name: Create awstats directories
   file:
@@ -46,7 +48,7 @@
     owner: www-data
     group: www-data
     mode: 0750
-  loop: {{ apache_awstats_domains }}
+  loop: "{{ apache_awstats_domains }}"
 
 - name: Setup awstats users
   community.general.htpasswd:
