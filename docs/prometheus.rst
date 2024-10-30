@@ -34,11 +34,12 @@ prometheus_server_ips
   firewall.
 
 prometheus_alertmanager_config
-  The alertmanager configuration (it will go to ``alertmanager.yml``).
+  The alertmanager configuration (it will go to ``alertmanager.yml``). If
+  unspecified, alertmanager will not be configured.
 
 prometheus_alert_rules
   Configuration of the alerting rules (it will go to
-  ``alert_rules.yml``).
+  ``alert_rules.yml``). If unspecified, there will be no alert rules.
 
 Example
 =======

@@ -7,8 +7,10 @@ alerting:
   - static_configs:
     - targets: ['localhost:9093']
 
+{% if prometheus_alert_rules %}
 rule_files:
   - "alert_rules.yml"
+{% endif %}
 
 scrape_configs:
   {{ prometheus_scrape_configs | to_yaml | indent(2) }}

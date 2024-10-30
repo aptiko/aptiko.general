@@ -1,0 +1,4 @@
+---
+
+prometheus_alert_rules: false
+prometheus_alertmanager_config: false
