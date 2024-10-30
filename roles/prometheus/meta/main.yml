@@ -8,3 +8,10 @@ dependencies:
       SSLProxyEngine on
   letsencrypt: true
   force_ssl: yes
+  when: '"aptiko.general.apache" in ansible_role_names'
+
+- role: aptiko.general.nginx_site
+  server_name: "{{ prometheus_server_name }}"
+  letsencrypt: true
+  force_ssl: yes
+  when: '"aptiko.general.nginx" in ansible_role_names'

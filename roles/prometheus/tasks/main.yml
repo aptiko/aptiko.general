@@ -57,3 +57,12 @@
     dest: /etc/apache2/snippets/{{ prometheus_server_name }}/grafana.conf
   notify:
    - Reload apache
+  when: '"aptiko.general.apache" in ansible_role_names'
+
+- name: Configure nginx for Grafana
+  template:
+    src: nginx-grafana.conf
+    dest: /etc/nginx/snippets/{{ prometheus_server_name }}/grafana.conf
+  notify:
+   - Reload nginx
+  when: '"aptiko.general.nginx" in ansible_role_names'
