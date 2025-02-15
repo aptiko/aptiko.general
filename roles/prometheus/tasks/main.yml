@@ -19,6 +19,11 @@
   notify:
    - Set Grafana password
 
+- name: Enable Grafana
+  service:
+    name: grafana-server
+    enabled: true
+
 - name: Configure Prometheus
   template:
     src: prometheus.yml
