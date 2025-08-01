@@ -41,29 +41,6 @@
     - ssl-cert
     - acl
 
-- include_tasks: default_site_cert.yml
-  when: apache_default_site_letsencrypt_server_name
-
-- name: Apache default site
-  template:
-    src: default-site.conf
-    dest: /etc/apache2/sites-available/000-default.conf
-  notify:
-  - Restart apache
-
-- name: Create snippets directory
-  file: name=/etc/apache2/snippets state=directory
-
-- name: Create snippets directory for default site
-  file: name=/etc/apache2/snippets/default-site state=directory
-
-- name: Apache default site main snippet
-  template:
-    src: default-site-main-snippet.conf
-    dest: /etc/apache2/snippets/default-site/main.conf
-  notify:
-  - Restart apache
-
 - name: Enable mod_proxy
   apache2_module: name=proxy state=present
   notify:
@@ -101,6 +78,29 @@
 
 - name: Enable mod_http2
   apache2_module: name=http2 state=present
+  notify:
+  - Restart apache
+
+- include_tasks: default_site_cert.yml
+  when: apache_default_site_letsencrypt_server_name
+
+- name: Apache default site
+  template:
+    src: default-site.conf
+    dest: /etc/apache2/sites-available/000-default.conf
+  notify:
+  - Restart apache
+
+- name: Create snippets directory
+  file: name=/etc/apache2/snippets state=directory
+
+- name: Create snippets directory for default site
+  file: name=/etc/apache2/snippets/default-site state=directory
+
+- name: Apache default site main snippet
+  template:
+    src: default-site-main-snippet.conf
+    dest: /etc/apache2/snippets/default-site/main.conf
   notify:
   - Restart apache
 
