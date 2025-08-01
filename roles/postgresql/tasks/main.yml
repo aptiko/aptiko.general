@@ -11,28 +11,13 @@
     postgis_scripts_apt_package: postgresql-15-postgis-3-scripts
   when: ansible_distribution_release == "bookworm"
 
-- name: Set variables for Debian 11
+- name: Set variables for Ubuntu 24.04
   set_fact:
-    postgresql_version: 13
-    timescale_apt_package: timescaledb-2-postgresql-13
-    postgis_apt_package: postgresql-13-postgis-3
-    postgis_scripts_apt_package: postgresql-13-postgis-3-scripts
-  when: ansible_distribution_release == "bullseye"
-
-- name: Set variables for Debian 10
-  set_fact:
-    postgresql_version: 11
-    timescale_apt_package: timescaledb-postgresql-11
-    postgis_apt_package: postgresql-11-postgis-2.5
-    postgis_scripts_apt_package: postgresql-11-postgis-2.5-scripts
-  when: ansible_distribution_release == "buster"
-
-- name: Set variables for Debian 9
-  set_fact:
-    postgresql_version: 9.6
-    postgis_apt_package: postgresql-9.6-postgis-2.3
-    postgis_scripts_apt_package: postgresql-9.6-postgis-2.3-scripts
-  when: ansible_distribution_release == "stretch"
+    postgresql_version: 16
+    postgis_apt_package: postgresql-16-postgis-3
+    postgis_scripts_apt_package: postgresql-16-postgis-3-scripts
+    timescale_apt_package: timescaledb-2-postgresql-16
+  when: ansible_distribution_release == "noble"
 
 - name: Set variables for Ubuntu 22.04
   set_fact:
@@ -41,13 +26,6 @@
     postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
     timescale_apt_package: timescaledb-2-postgresql-14
   when: ansible_distribution_release == "jammy"
-
-- name: Set variables for Ubuntu 18.04
-  set_fact:
-    postgresql_version: 10
-    postgis_apt_package: postgresql-10-postgis-2.4
-    postgis_scripts_apt_package: postgresql-10-postgis-2.4-scripts
-  when: ansible_distribution_release == "bionic"
 
 - name: Setup Timescale repository
   apt_repository:
