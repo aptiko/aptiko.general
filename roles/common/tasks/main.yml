@@ -44,18 +44,18 @@
 
 - name: Install ssh public key
   copy: content="{{ ssh_pub_key }}\n" dest=/root/.ssh/id_rsa.pub
-  when: ssh_pub_key|default(False)
+  when: ssh_pub_key | default('') | length > 0
 
 - name: Install ssh private key
   copy: content="{{ ssh_priv_key }}\n" dest=/root/.ssh/id_rsa mode=600
-  when: ssh_priv_key|default(False)
+  when: ssh_priv_key | default('') | length > 0
 
 - name: Setup root authorized keys
   authorized_key:
     user: root
     exclusive: true
     key: "{% for key in root_authorized_keys %}{{ key }}\n{% endfor %}"
-  when: root_authorized_keys|default(False)
+  when: root_authorized_keys | default([]) | length > 0
 
 - name: Allow root to ssh without password
   lineinfile:
@@ -116,11 +116,11 @@
   apt:
     name:
      - prometheus-node-exporter
-  when: prometheus_server_ips|default(False)
+  when: prometheus_server_ips | default('') | length > 0
 
 - name: Allow Prometheus through firewall
   lineinfile:
     path: "/etc/ferm/ansible-late"
     line: "proto tcp saddr ({{ prometheus_server_ips }}) ACCEPT;"
   notify: Reload ferm
-  when: prometheus_server_ips|default(False)
+  when: prometheus_server_ips | default('') | length > 0
