@@ -1,2 +1,2 @@
 #!/bin/bash
-duply main backup >>/tmp/duply.out
+duply main pre+bkp+post >>/tmp/duply.out
