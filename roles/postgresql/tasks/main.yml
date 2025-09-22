@@ -148,7 +148,7 @@
   become: yes
   become_user: postgres
   community.postgresql.postgresql_user:
-    db: postgres
+    login_db: postgres
     login_user: postgres
     login_password: "{{ postgres_password }}"
     name: prometheus
