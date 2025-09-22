@@ -14,6 +14,7 @@
       - virtualenv
       - gettext
       - gnupg
+      - nfs-common
   when: not duply_deactivate
 
 - name: Install setuptools_scm (required for duplicity)
