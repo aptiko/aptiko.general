@@ -36,11 +36,10 @@ Pre- and post- scripts
 ======================
 
 The :file:`/etc/duply/main/pre-scripts` and
-:file:`/etc/duplicity/post-scripts` directories contain scripts that
+:file:`/etc/duply/post-scripts` directories contain scripts that
 will be executed before and after backup. Each ansible role that needs
 this should drop executable files in these directories. These files are
-executed in no particular order.  :file:`/etc/duply/main/pre` is
-particularly useful for storing database dumps.
+executed in no particular order.
 
 Since ``duply`` does not directly support having many scripts, but only
 a single pre and a single post script (in :file:`/etc/duply/main/pre`
