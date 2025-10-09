@@ -23,7 +23,7 @@
     src: sasl_passwd
     dest: /etc/postfix/sasl_passwd
     mode: 0600
-  when: smarthostusername
+  when: smarthostusername | length > 0
   notify:
     - Compile sasl_passwd
 

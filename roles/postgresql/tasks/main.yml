@@ -154,7 +154,7 @@
   apt:
     name:
      - prometheus-postgres-exporter
-  when: prometheus_server_ips|default(False)
+  when: prometheus_server_ips|default([])|length > 1
 
 - name: Create database user prometheus
   become: yes
