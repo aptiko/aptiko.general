@@ -18,35 +18,43 @@ root's shell in :file:`.profile` and :file:`.bashrc`.
 Parameters
 ==========
 
-ssh_pub_key, ssh_priv_key
-  Optional. Root's ssh keys.
+.. data:: ssh_pub_key
+          ssh_priv_key
 
-root_authorized_keys
-  Optional. A list of strings. Any other keys are removed from root's
-  authorized_keys. If unspecified, the root's authorized keys are not
-  touched.
+   Optional. Root's RSA ssh keys.
 
-ssh_port
-  Optional. The port on which the ssh server will be listening. The
-  default is 22. If this is changed, you will then need to reconfigure
-  Ansible so that, in next runs, it connects to the new port.
+.. data:: root_authorized_keys
 
-ssh_allowed_ip_addresses
-  Optional. A list of IP addresses or networks from which access to ssh
-  will be allowed. The list can includes both IPv4 and IPv6 addresses
-  and networks. The default is to allow access to all addresses. This
-  affects the configuration of the firewall.
+   Optional. A list of strings. Any other keys are removed from root's
+   authorized_keys. If unspecified, the root's authorized keys are not
+   touched.
 
-command_line_editing_mode
-  Optional. Set it to "vi" to enable vi editing mode in bash.
+.. data:: ssh_port
 
-prometheus_server_ips
-  See the :ref:`prometheus` role.
+   Optional. The port on which the ssh server will be listening. The
+   default is 22. If this is changed, you will then need to reconfigure
+   Ansible so that, in next runs, it connects to the new port.
 
-forward_journal_to_syslog
-  By default, Debian systems forward journal entries to syslog, so they
-  are duplicated in :file:`/var/log/syslog`. Setting this to ``false``
-  deactivates this. The default is ``true``.
+.. data:: ssh_allowed_ip_addresses
+
+   Optional. A list of IP addresses or networks from which access to ssh
+   will be allowed. The list can includes both IPv4 and IPv6 addresses
+   and networks. The default is to allow access to all addresses. This
+   affects the configuration of the firewall.
+
+.. data:: command_line_editing_mode
+
+   Optional. Set it to "vi" to enable vi editing mode in bash.
+
+.. data:: prometheus_server_ips
+
+   See the :ref:`prometheus` role.
+
+.. data:: forward_journal_to_syslog
+
+   By default, Debian systems forward journal entries to syslog, so they
+   are duplicated in :file:`/var/log/syslog`. Setting this to ``false``
+   deactivates this. The default is ``true``.
 
 Firewall
 ========
