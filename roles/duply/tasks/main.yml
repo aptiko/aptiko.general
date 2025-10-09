@@ -15,14 +15,7 @@
       - gettext
       - gnupg
       - nfs-common
-  when: not duply_deactivate
-
-- name: Install setuptools_scm (required for duplicity)
-  pip:
-    name: setuptools_scm
-    virtualenv: /opt/duply/venv
-    virtualenv_site_packages: no
-    virtualenv_python: python3
+      - python3-setuptools-scm
   when: not duply_deactivate
 
 - name: Install setuptools>=20.2 (required by b2)

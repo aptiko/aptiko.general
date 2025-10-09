@@ -1,7 +1,12 @@
 ---
-- name: Install Timescale keyring
-  copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
-  when: use_timescale
+- name: Set variables for Debian 13
+  set_fact:
+    postgresql_version: 17
+    timescale_apt_package: postgresql-17-timescaledb
+    postgis_apt_package: postgresql-17-postgis-3
+    postgis_scripts_apt_package: postgresql-17-postgis-3-scripts
+    install_timescale_from_timescale_repo: false
+  when: ansible_distribution_release == "trixie"
 
 - name: Set variables for Debian 12
   set_fact:
@@ -9,6 +14,7 @@
     timescale_apt_package: timescaledb-2-postgresql-15
     postgis_apt_package: postgresql-15-postgis-3
     postgis_scripts_apt_package: postgresql-15-postgis-3-scripts
+    install_timescale_from_timescale_repo: true
   when: ansible_distribution_release == "bookworm"
 
 - name: Set variables for Ubuntu 24.04
@@ -17,6 +23,7 @@
     postgis_apt_package: postgresql-16-postgis-3
     postgis_scripts_apt_package: postgresql-16-postgis-3-scripts
     timescale_apt_package: timescaledb-2-postgresql-16
+    install_timescale_from_timescale_repo: true
   when: ansible_distribution_release == "noble"
 
 - name: Set variables for Ubuntu 22.04
@@ -25,14 +32,19 @@
     postgis_apt_package: postgresql-14-postgis-3
     postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
     timescale_apt_package: timescaledb-2-postgresql-14
+    install_timescale_from_timescale_repo: true
   when: ansible_distribution_release == "jammy"
+
+- name: Install Timescale keyring
+  copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
+  when: use_timescale and install_timescale_from_timescale_repo
 
 - name: Setup Timescale repository
   apt_repository:
     repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} main
     state: present
     update_cache: true
-  when: use_timescale
+  when: use_timescale and install_timescale_from_timescale_repo
 
 - name: Install apt packages required for PostgreSQL
   apt:

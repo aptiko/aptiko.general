@@ -27,7 +27,7 @@
       - ferm
       - sudo
       - ca-certificates
-      - ntp
+      - ntpsec
       - debian-goodies
       - locales
 
