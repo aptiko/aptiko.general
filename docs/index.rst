@@ -43,6 +43,7 @@ Reference
 .. toctree::
    node
    prometheus
+   grafana
    :maxdepth: 1
    :caption: Miscellaneous roles:
 

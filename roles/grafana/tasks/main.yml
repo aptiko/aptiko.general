@@ -1,0 +1,65 @@
+---
+
+- name: Import Grafana GPG key
+  ansible.builtin.apt_key:
+    url: https://packages.grafana.com/gpg.key
+
+- name: Add Grafana repository
+  ansible.builtin.apt_repository:
+    repo: 'deb https://apt.grafana.com stable main'
+    filename: 'grafana'
+
+- name: Install Grafana
+  ansible.builtin.apt:
+     name:
+      - grafana
+     update_cache: false
+  notify: Set Grafana password
+
+- name: Enable Grafana
+  ansible.builtin.service:
+    name: grafana-server
+    enabled: true
+
+- name: Configure domain
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: domain
+    value: "{{ grafana_server_name }}"
+    mode: "0640"
+  notify: Restart Grafana
+
+- name: Configure root_url
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: root_url
+    value: "https://%(domain)s{{ grafana_root_path }}"
+    mode: "0640"
+  notify: Restart Grafana
+
+- name: Configure serve_from_sub_path
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: serve_from_sub_path
+    value: '{{ "false" if grafana_root_path == "/" else "true" }}'
+    mode: "0640"
+  notify: Restart Grafana
+
+- name: Configure Apache for Grafana
+  ansible.builtin.template:
+    src: apache-grafana.conf
+    dest: /etc/apache2/snippets/{{ grafana_server_name }}/grafana.conf
+    mode: "0644"
+  notify: Reload apache
+  when: '"aptiko.general.apache" in ansible_role_names'
+
+- name: Configure nginx for Grafana
+  ansible.builtin.template:
+    src: nginx-grafana.conf
+    dest: /etc/nginx/snippets/{{ grafana_server_name }}/grafana.conf
+    mode: "0644"
+  notify: Reload nginx
+  when: '"aptiko.general.nginx" in ansible_role_names'

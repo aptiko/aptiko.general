@@ -7,19 +7,10 @@ prometheus
 Overview
 ========
 
-This is an Ansible role for installing Prometheus and Grafana on
-Debian/Ubuntu.
+This is an Ansible role for installing Prometheus on Debian/Ubuntu. You may also want to install :ref:`grafana`.
 
 Parameters
 ==========
-
-grafana_admin_password
-  The password for the Grafana ``admin`` user; this is set when running
-  the role.
-
-prometheus_server_name
-  The domain where Grafana will be listening, such as
-  "prometheus.example.com".
 
 prometheus_scrape_configs
   The ``scrape_configs`` part of the Prometheus configuration.
@@ -48,7 +39,6 @@ Example
 
   tasks:
     - role: aptiko.general.prometheus
-      grafana_admin_password: topsecret  # Should obviously be vaulted
       prometheus_server_name: prometheus.example.com
       prometheus_server_ips: "1.2.3.4 abcd:ef0:123:456::1"
       prometheus_scrape_configs:

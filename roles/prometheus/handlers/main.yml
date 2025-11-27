@@ -1,16 +1,5 @@
 ---
 
-- name: Set Grafana password
-  command: grafana-cli admin reset-admin-password {{ grafana_admin_password }}
-  notify: Restart Grafana
-  become: yes
-  become_user: grafana
-
-- name: Restart Grafana
-  service:
-    name: grafana-server
-    state: restarted
-
 - name: Restart Prometheus
   service:
     name: prometheus
