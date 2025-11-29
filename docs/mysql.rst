@@ -25,8 +25,8 @@ mysql_config
 
     - role: aptiko.general.mysql
       mysql_config:
-      disable-log-bin: null
-      bind-address: 0.0.0.0
+        disable-log-bin: null
+        bind-address: 0.0.0.0
 
   The above will result in the following being added to
   :file:`/etc/mysql/mysql.conf.d/mysqld.cnf`::
