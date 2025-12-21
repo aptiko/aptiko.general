@@ -44,6 +44,7 @@ Reference
    node
    prometheus
    grafana
+   docker
    :maxdepth: 1
    :caption: Miscellaneous roles:
 
