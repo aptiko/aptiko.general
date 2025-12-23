@@ -1,13 +1,13 @@
 ---
 
 - name: Install apt packages required for MySQL
-  apt:
+  ansible.builtin.apt:
     name:
       - mysql-server
       - python3-pymysql
 
 - name: Configure mysql
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/mysql/mysql.conf.d/mysqld.cnf
     regexp: '^\s*{{ item.key }}\s*(=|$)'
     line: "{{ item.key }}{% if item.value is not none %} = {{ item.value }}{% endif %}"
@@ -16,26 +16,32 @@
     - Restart MySQL
 
 - name: Start MySQL
-  service:
+  ansible.builtin.service:
     name: mysql
     state: started
 
 - name: Check whether mysql root password is set
-  become: yes
+  become: true
   become_user: nobody
   vars:
     ansible_remote_tmp: /tmp
-  shell: echo '\q' | mysql --user=root --password={{ mysql_root_password }} mysql
+  ansible.builtin.shell: echo '\q' | mysql --user=root --password={{ mysql_root_password }} mysql
   register: connect_to_mysql_without_password
-  check_mode: no
-  ignore_errors: True
-  changed_when: False
+  check_mode: false
+  ignore_errors: true
+  changed_when: false
 
 - name: Set mysql root password
-  shell: >
-    echo "UPDATE user SET plugin='mysql_native_password' WHERE User='root'; FLUSH PRIVILEGES; ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password}}'; FLUSH PRIVILEGES;"
+  ansible.builtin.shell: >
+    set -o pipefail &&
+    echo
+      "UPDATE user SET plugin='mysql_native_password' WHERE User='root';
+       FLUSH PRIVILEGES;
+       ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';
+       FLUSH PRIVILEGES;"
     | mysql --user=root mysql
   when: "connect_to_mysql_without_password.rc == 1"
+  changed_when: true
 
 - name: Create mysql user root@%
   community.mysql.mysql_user:
@@ -50,7 +56,7 @@
     column_case_sensitive: false
 
 - name: Allow MySQL firewall
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ferm/ansible-late
     line: "proto tcp dport 3306 saddr ({{ mysql_allowed_client_ips }}) ACCEPT;"
   notify: Reload ferm
@@ -67,13 +73,13 @@
   when: prometheus_server_ips|default([])|length > 0
 
 - name: Install prometheus-mysqld-exporter
-  apt:
+  ansible.builtin.apt:
     name:
-     - prometheus-mysqld-exporter
+      - prometheus-mysqld-exporter
   when: prometheus_server_ips|default([])|length > 0
 
 - name: Configure prometheus-mysqld-exporter username
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/default/prometheus-mysqld-exporter
     regexp: '^ARGS\s*='
     line: 'ARGS="--mysqld.username=prometheus"'
@@ -81,7 +87,7 @@
   when: prometheus_server_ips|default([])|length > 0
 
 - name: Configure prometheus-mysqld-exporter password
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/default/prometheus-mysqld-exporter
     regexp: '^MYSQLD_EXPORTER_PASSWORD\s*='
     line: 'MYSQLD_EXPORTER_PASSWORD="{{ mysql_prometheus_password }}"'
