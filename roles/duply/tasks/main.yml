@@ -1,96 +1,21 @@
-# The OS's prepackaged duply and duplicity are a pain. We install our
-# own versions.
-
-- name: Uninstall prepackaged duply
-  apt: name=duply state=absent autoremove=True
-
-- name: Install apt packages needed for duplicity
-  apt:
-    name:
-      - librsync-dev
-      - gcc
-      - libc6-dev
-      - python3-dev
-      - virtualenv
-      - gettext
-      - gnupg
-      - nfs-common
-      - python3-setuptools-scm
+- name: Uninstall manually installed duply
+  ansible.builtin.file:
+    path: /opt/duply
+    state: absent
   when: not duply_deactivate
 
-- name: Install setuptools>=20.2 (required by b2)
-  pip:
-    name: setuptools>=20.2
-    virtualenv: /opt/duply/venv
-    virtualenv_site_packages: no
-    virtualenv_python: python3
-  when: not duply_deactivate
-
-- name: Install duplicity
-  pip:
-    name: duplicity
-    virtualenv: /opt/duply/venv
-    virtualenv_site_packages: no
-    virtualenv_python: python3
-    version: 0.8.19
+- name: Uninstall manually installed duply executable
+  ansible.builtin.file:
+    path: /usr/local/bin/duply
+    state: absent
   when: not duply_deactivate
 
 - name: Install duply
-  copy: src=duply-2.3.1 dest=/opt/duply/duply mode=0755
-  when: not duply_deactivate
-
-- name: Install duply wrapper
-  copy:
-    dest: /usr/local/bin/duply
-    mode: 0755
-    content: |
-      #!/bin/sh
-      PATH=/opt/duply/venv/bin:$PATH
-      exec /opt/duply/duply "$@"
-
-# We install python-crypto and python-ecdsa directly and not as dependencies,
-# because we do smart things with paramiko installation below and they
-# might be accidentally autoremoved.
-
-# - name: Install python-crypto
-#   apt: name=python-crypto
-#   when: not duply_deactivate
-
-# - name: Install python-ecdsa
-#   apt: name=python-ecdsa
-#   when: not duply_deactivate
-
-# We install paramiko from pip, because the Jessie version has some
-# problems; notably later paramiko versions have improved on
-# https://github.com/paramiko/paramiko/issues/17; in addition, older
-# paramiko versions say "no acceptable kex algorithm" when they try to
-# connect to Jessie servers; finally,
-# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=851551
-- name: Ensure paramiko deb is uninstalled
-  apt: name=python-paramiko state=absent
-- name: Install paramiko from pip
-  pip:
-    name: paramiko
-    version: 1.17.4
-    virtualenv: /opt/duply/venv
-    virtualenv_site_packages: no
-    virtualenv_python: python3
-  when: not duply_deactivate
-
-# Install Backblaze backend in case it's needed
-- name: Install Backblaze B2 backend
-  pip:
-    name: b2
-    virtualenv: /opt/duply/venv
-    virtualenv_site_packages: no
-    virtualenv_python: python3
-    version: 1.4.2
-  when: not duply_deactivate
-
-# Avoid the "no module gio" warning
-# - name: Install python-gobject
-#   apt: name=python-gobject
-#   when: not duply_deactivate
+  apt:
+    name:
+      - duply
+      - python3-b2sdk
+  when: duply_deactivate
 
 - name: Create duply configuration directory
   file: dest=/etc/duply/main state=directory mode=0700
