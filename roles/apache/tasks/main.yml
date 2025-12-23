@@ -82,7 +82,7 @@
   - Restart apache
 
 - include_tasks: default_site_cert.yml
-  when: apache_default_site_letsencrypt_server_name
+  when: apache_default_site_letsencrypt_server_name != ""
 
 - name: Apache default site
   template:

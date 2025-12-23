@@ -18,7 +18,7 @@
   template:
     src: alert_rules.yml
     dest: /etc/prometheus/alert_rules.yml
-  when: prometheus_alert_rules
+  when: prometheus_alert_rules != ""
   notify:
     - Restart Prometheus
 
@@ -26,7 +26,7 @@
   template:
     src: alertmanager.yml
     dest: /etc/prometheus/alertmanager.yml
-  when: prometheus_alertmanager_config
+  when: prometheus_alertmanager_config != ""
   notify:
     - Restart alertmanager
 
@@ -35,6 +35,6 @@
     dest: /etc/default/prometheus-alertmanager
     content: |
       ARGS="--cluster.advertise-address={{ ansible_default_ipv4.address }}:9093"
-  when: prometheus_alertmanager_config
+  when: prometheus_alertmanager_config != ""
   notify:
     - Restart alertmanager

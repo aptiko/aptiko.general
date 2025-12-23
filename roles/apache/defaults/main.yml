@@ -7,5 +7,5 @@ apache_default_site_awstats_users: []
 apache_default_site_awstats_extra_apache_config: ""
 apache_default_site_document_root: "/var/www/html"
 apache_default_site_extras: "Redirect 404 /"
-apache_default_site_letsencrypt_server_name: false
+apache_default_site_letsencrypt_server_name: ""
 apache_default_site_force_ssl: false
