@@ -11,44 +11,70 @@
   when: not duply_deactivate
 
 - name: Install duply
-  apt:
+  ansible.builtin.apt:
     name:
       - duply
       - python3-b2sdk
   when: duply_deactivate
 
 - name: Create duply configuration directory
-  file: dest=/etc/duply/main state=directory mode=0700
+  ansible.builtin.file:
+    dest: /etc/duply/main
+    state: directory
+    mode: "0700"
   when: not duply_deactivate
 
 - name: Create duply exclude file
-  copy: src=exclude dest=/etc/duply/main/exclude
+  ansible.builtin.copy:
+    src: exclude
+    dest: /etc/duply/main/exclude
+    mode: "0644"
   when: not duply_deactivate
 
 - name: Create duply configuration file
-  template: src=conf dest=/etc/duply/main/conf
+  ansible.builtin.template:
+    src: conf
+    dest: /etc/duply/main/conf
+    mode: "0644"
   when: not duply_deactivate
 
 - name: Create duply pre file
-  copy: src=pre dest=/etc/duply/main/pre mode=0755
+  ansible.builtin.copy:
+    src: pre
+    dest: /etc/duply/main/pre
+    mode: "0755"
   when: not duply_deactivate
 
 - name: Create duply pre-scripts directory
-  file: dest=/etc/duply/main/pre-scripts state=directory
+  ansible.builtin.file:
+    dest: /etc/duply/main/pre-scripts
+    state: directory
+    mode: "0755"
   when: not duply_deactivate
 
 - name: Create duply post file
-  copy: src=post dest=/etc/duply/main/post mode=0755
+  ansible.builtin.copy:
+    src: post
+    dest: /etc/duply/main/post
+    mode: "0755"
   when: not duply_deactivate
 
 - name: Create duply post-scripts directory
-  file: dest=/etc/duply/main/post-scripts state=directory
+  ansible.builtin.file:
+    dest: /etc/duply/main/post-scripts
+    state: directory
+    mode: "0755"
   when: not duply_deactivate
 
 - name: Install duply cron job
-  copy: src=duply.cron dest=/etc/cron.daily/duply mode=0755
+  ansible.builtin.copy:
+    src: duply.cron
+    dest: /etc/cron.daily/duply
+    mode: "0755"
   when: not duply_deactivate
 
 - name: Remove duply cron job
-  file: dest=/etc/cron.daily/duply state=absent 
+  ansible.builtin.file:
+    dest: /etc/cron.daily/duply
+    state: absent
   when: duply_deactivate|bool
