@@ -3,7 +3,7 @@
 - name: Install apt packages required for MySQL
   ansible.builtin.apt:
     name:
-      - mysql-server
+      - default-mysql-server
       - python3-pymysql
 
 - name: Configure mysql
@@ -33,13 +33,10 @@
 
 - name: Set mysql root password
   ansible.builtin.shell: >
-    set -o pipefail &&
-    echo
-      "UPDATE user SET plugin='mysql_native_password' WHERE User='root';
-       FLUSH PRIVILEGES;
+    set -o pipefail && echo "
        ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';
-       FLUSH PRIVILEGES;"
-    | mysql --user=root mysql
+       FLUSH PRIVILEGES;
+    " | mysql --user=root mysql
   when: "connect_to_mysql_without_password.rc == 1"
   changed_when: true
 
