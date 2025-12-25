@@ -62,7 +62,8 @@ letsencrypt
   the server name instead of ``server_name``.  If ``letsencrypt`` is
   ``true`` or a string, ``cert``, ``private_key`` and
   ``chain_certificates`` should not be specified. If neither
-  ``letsencrypt`` nor ``cert`` is specified, there's no SSL.
+  ``letsencrypt`` nor ``cert`` is specified, then the default is to use
+  Debian's automatically created self-signed "snakeoil" certificate.
 
 cert
   The SSL certificate (see also ``letsencrypt``).
