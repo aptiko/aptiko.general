@@ -9,10 +9,18 @@
     update_cache: true
     upgrade: true
   when: not stat_result.stat.exists
+  notify: Reboot
 
-- name: Restart if this is a new server
-  ansible.builtin.reboot:
-  when: not stat_result.stat.exists
+- name: Do not use tmpfs for /tmp
+  ansible.builtin.systemd:
+    name: tmp.mount
+    masked: true
+    enabled: false
+    daemon_reload: true
+  notify: Reboot
+
+- name: Reboot if needed
+  ansible.builtin.meta: flush_handlers
 
 - name: Uninstall packages we don't want
   ansible.builtin.apt:

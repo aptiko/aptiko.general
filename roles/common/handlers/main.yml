@@ -13,3 +13,6 @@
   ansible.builtin.service:
     name: systemd-journald
     state: restarted
+
+- name: Reboot
+  ansible.builtin.reboot:
