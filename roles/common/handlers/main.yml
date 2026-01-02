@@ -1,15 +1,15 @@
 ---
 - name: Reload ssh
-  service:
+  ansible.builtin.service:
     name: ssh
     state: reloaded
 
 - name: Reload ferm
-  service:
+  ansible.builtin.service:
     name: ferm
     state: reloaded
 
 - name: Restart journald
-  service:
+  ansible.builtin.service:
     name: systemd-journald
     state: restarted

@@ -1,28 +1,28 @@
 ---
 - name: Check if we are running on a new server
-  stat:
+  ansible.builtin.stat:
     path: /etc/ferm/ansible-early
   register: stat_result
 
 - name: Update and upgrade if this is a new server
-  apt:
-    update_cache: yes
-    upgrade: yes
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
   when: not stat_result.stat.exists
 
 - name: Restart if this is a new server
-  reboot:
+  ansible.builtin.reboot:
   when: not stat_result.stat.exists
 
 - name: Uninstall packages we don't want
-  apt:
+  ansible.builtin.apt:
     name:
       - unattended-upgrades
       - ufw
     state: absent
 
 - name: Install common apt packages
-  apt:
+  ansible.builtin.apt:
     name:
       - ferm
       - sudo
@@ -32,7 +32,9 @@
       - locales
 
 - name: Install locales
-  locale_gen: name={{ item }} state=present
+  community.general.locale_gen:
+    name: "{{ item }}"
+    state: present
   with_items:
     - en_US.UTF-8
     - en_DK.UTF-8
@@ -40,32 +42,41 @@
 # SSH keys
 
 - name: Create /root/.ssh
-  file: state=directory dest=/root/.ssh
+  ansible.builtin.file:
+    state: directory
+    dest: /root/.ssh
+    mode: "0700"
 
 - name: Install ssh public key
-  copy: content="{{ ssh_pub_key }}\n" dest=/root/.ssh/id_rsa.pub
+  ansible.builtin.copy:
+    content: "{{ ssh_pub_key }}\n"
+    dest: /root/.ssh/id_rsa.pub
+    mode: "0755"
   when: ssh_pub_key | default('') | length > 0
 
 - name: Install ssh private key
-  copy: content="{{ ssh_priv_key }}\n" dest=/root/.ssh/id_rsa mode=600
+  ansible.builtin.copy:
+    content: "{{ ssh_priv_key }}\n"
+    dest: /root/.ssh/id_rsa
+    mode: "0600"
   when: ssh_priv_key | default('') | length > 0
 
 - name: Setup root authorized keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     exclusive: true
     key: "{% for key in root_authorized_keys %}{{ key }}\n{% endfor %}"
   when: root_authorized_keys | default([]) | length > 0
 
 - name: Allow root to ssh without password
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
     regexp: ^PermitRootLogin
     line: PermitRootLogin without-password
   notify: Reload ssh
 
 - name: Configure ssh port
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
     regexp: ^#?Port
     line: Port {{ ssh_port }}
@@ -74,52 +85,63 @@
 # Root .bashrc and .profile
 
 - name: Install bashrc for root
-  template: src=bashrc.j2 dest=/root/.bashrc
+  ansible.builtin.template:
+    src: bashrc.j2
+    dest: /root/.bashrc
+    mode: "0644"
 
 - name: Install profile for root
-  copy: src=profile dest=/root/.profile
-
+  ansible.builtin.copy:
+    src: profile
+    dest: /root/.profile
+    mode: "0644"
 
 # Firewall
 
 - name: Start ferm at boot
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/default/ferm"
     regexp: "^ENABLED="
     line: 'ENABLED="yes"'
 
 - name: Set ferm.conf
-  template: src=ferm.conf dest=/etc/ferm/ferm.conf
+  ansible.builtin.template:
+    src: ferm.conf
+    dest: /etc/ferm/ferm.conf
+    mode: "0644"
   notify: Reload ferm
 
 - name: Create file /etc/ferm/ansible-early
-  copy:
+  ansible.builtin.copy:
     dest: /etc/ferm/ansible-early
-    force: no
+    force: false
     content: ""
+    mode: "0644"
 
 - name: Create file /etc/ferm/ansible-late
-  copy:
+  ansible.builtin.copy:
     dest: /etc/ferm/ansible-late
-    force: no
+    force: false
     content: ""
+    mode: "0644"
 
 - name: Configure systemd-journald
-  template:
+  ansible.builtin.template:
     src: journald.conf
     dest: /etc/systemd/journald.conf
+    mode: "0644"
   notify: Restart journald
 
 # Node exporter
 
 - name: Install node-exporter
-  apt:
+  ansible.builtin.apt:
     name:
-     - prometheus-node-exporter
+      - prometheus-node-exporter
   when: prometheus_server_ips | default('') | length > 0
 
 - name: Allow Prometheus through firewall
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/ferm/ansible-late"
     line: "proto tcp saddr ({{ prometheus_server_ips }}) ACCEPT;"
   notify: Reload ferm
