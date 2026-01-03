@@ -11,12 +11,18 @@
   when: not stat_result.stat.exists
   notify: Reboot
 
+- name: Check if tmp.mount exists
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/system/tmp.mount
+  register: tmp_mount_unit
+
 - name: Do not use tmpfs for /tmp
   ansible.builtin.systemd:
     name: tmp.mount
     masked: true
     enabled: false
     daemon_reload: true
+  when: tmp_mount_unit.stat.exists
   notify: Reboot
 
 - name: Reboot if needed
