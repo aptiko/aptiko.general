@@ -90,18 +90,10 @@
     line: Port {{ ssh_port }}
   notify: Reload ssh
 
-# Root .bashrc and .profile
-
 - name: Install bashrc for root
   ansible.builtin.template:
     src: bashrc.j2
     dest: /root/.bashrc
-    mode: "0644"
-
-- name: Install profile for root
-  ansible.builtin.copy:
-    src: profile
-    dest: /root/.profile
     mode: "0644"
 
 # Firewall
