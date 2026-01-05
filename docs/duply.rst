@@ -59,8 +59,10 @@ Parameters
 ==========
 
 duply_deactivate
-  Default ``false``. Set to ``true`` in order to deactivate backup of a
-  server.  This may be useful when setting up backup servers themselves.
+  Default ``false``. Set to ``true`` in order for duply to not run
+  automatically. If the role is included, duply is installed. The only
+  difference is that, if this parameter is ``true``, no cron job is
+  installed (or it is removed if it was previously installed).
 
 duply_target
   No default.

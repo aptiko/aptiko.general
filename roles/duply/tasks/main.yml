@@ -2,69 +2,59 @@
   ansible.builtin.file:
     path: /opt/duply
     state: absent
-  when: not duply_deactivate
 
 - name: Uninstall manually installed duply executable
   ansible.builtin.file:
     path: /usr/local/bin/duply
     state: absent
-  when: not duply_deactivate
 
 - name: Install duply
   ansible.builtin.apt:
     name:
       - duply
       - python3-b2sdk
-  when: not duply_deactivate
 
 - name: Create duply configuration directory
   ansible.builtin.file:
     dest: /etc/duply/main
     state: directory
     mode: "0700"
-  when: not duply_deactivate
 
 - name: Create duply exclude file
   ansible.builtin.copy:
     src: exclude
     dest: /etc/duply/main/exclude
     mode: "0644"
-  when: not duply_deactivate
 
 - name: Create duply configuration file
   ansible.builtin.template:
     src: conf
     dest: /etc/duply/main/conf
     mode: "0644"
-  when: not duply_deactivate
 
 - name: Create duply pre file
   ansible.builtin.copy:
     src: pre
     dest: /etc/duply/main/pre
     mode: "0755"
-  when: not duply_deactivate
 
 - name: Create duply pre-scripts directory
   ansible.builtin.file:
     dest: /etc/duply/main/pre-scripts
     state: directory
     mode: "0755"
-  when: not duply_deactivate
 
 - name: Create duply post file
   ansible.builtin.copy:
     src: post
     dest: /etc/duply/main/post
     mode: "0755"
-  when: not duply_deactivate
 
 - name: Create duply post-scripts directory
   ansible.builtin.file:
     dest: /etc/duply/main/post-scripts
     state: directory
     mode: "0755"
-  when: not duply_deactivate
 
 - name: Install duply cron job
   ansible.builtin.copy:
@@ -77,4 +67,4 @@
   ansible.builtin.file:
     dest: /etc/cron.daily/duply
     state: absent
-  when: duply_deactivate|bool
+  when: duply_deactivate
