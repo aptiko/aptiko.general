@@ -1,3 +1,4 @@
 ---
+nginx_ssl: true
 letsencrypt: false
 document_root: /var/www/{{ server_name }}

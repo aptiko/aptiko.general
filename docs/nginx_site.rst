@@ -70,13 +70,17 @@ letsencrypt
   Encrypt certificates for ``server_name`` are used; if they don't exist
   in :file:`/etc/letsencrypt`, they are created with ``certbot``. If a
   string is used, it's the same thing, except that the string is used as
-  the domain name instead of ``server_name``.  If `letsencrypt` is
-  "false", there's no SSL.
+  the domain name instead of ``server_name``.  If ``letsencrypt`` is false
+  and ``nginx_ssl`` is true, Debian's automatically created self-signed
+  "snakeoil" certificates are used.
 
 letsencrypt_admin
   The email that is registered with certbot. This must be specified if
   ``letsencrypt`` is specified. Let's Encrypt will email that address if
   the certificate fails to renew.
+
+nginx_ssl
+  Can be "true" (the default) or "false". If "false", SSL is disabled,
 
 force_ssl
   Can be "true" or "false" (the default). If "true", visiting the
