@@ -6,14 +6,42 @@
       - default-mysql-server
       - python3-pymysql
 
+- name: Check MySQL server configuration file
+  ansible.builtin.stat:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+  register: mysql_mysqld_config_file
+
+- name: Check MariaDB server configuration file
+  ansible.builtin.stat:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+  register: mysql_mariadb_config_file
+
+- name: Check server configuration file exists
+  ansible.builtin.assert:
+    that:
+      - mysql_mysqld_config_file.stat.exists or mysql_mariadb_config_file.stat.exists
+    fail_msg: Could not find MySQL or MariaDB server configuration file
+
+- name: Set MySQL server configuration file
+  ansible.builtin.set_fact:
+    mysql_server_config_file: >-
+      {{
+        '/etc/mysql/mysql.conf.d/mysqld.cnf'
+        if mysql_mysqld_config_file.stat.exists
+        else '/etc/mysql/mariadb.conf.d/50-server.cnf'
+      }}
+
 - name: Configure mysql
   ansible.builtin.lineinfile:
-    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    path: "{{ mysql_server_config_file }}"
     regexp: '^\s*{{ item.key }}\s*(=|$)'
     line: "{{ item.key }}{% if item.value is not none %} = {{ item.value }}{% endif %}"
   loop: "{{ mysql_config | dict2items }}"
   notify:
     - Restart MySQL
+
+- name: Configure MySQL TLS
+  ansible.builtin.include_tasks: tls.yml
 
 - name: Start MySQL
   ansible.builtin.service:

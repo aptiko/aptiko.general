@@ -1,0 +1,233 @@
+---
+
+# MySQL often automatically generates TLS certificates in /var/lib/mysql.
+# MariaDB, including Debian trixie, may not. Generate the same CA/server/client
+# certificate set when it is missing, and ensure the server certificate uses
+# mysql_fqdn.
+
+- name: Install apt packages required for MySQL TLS
+  ansible.builtin.apt:
+    name:
+      - openssl
+
+- name: Generate MySQL CA certificate
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -newkey
+      - rsa:4096
+      - -nodes
+      - -x509
+      - -days
+      - "3650"
+      - -subj
+      - /CN=MySQL_Server_Auto_Generated_CA_Certificate
+      - -keyout
+      - /var/lib/mysql/ca-key.pem
+      - -out
+      - /var/lib/mysql/ca.pem
+    creates: /var/lib/mysql/ca.pem
+
+- name: Check MySQL client key
+  ansible.builtin.stat:
+    path: /var/lib/mysql/client-key.pem
+  register: mysql_client_key
+
+- name: Check MySQL client certificate
+  ansible.builtin.stat:
+    path: /var/lib/mysql/client-cert.pem
+  register: mysql_client_cert
+
+- name: Check MySQL client certificate modulus
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - x509
+      - -in
+      - /var/lib/mysql/client-cert.pem
+      - -noout
+      - -modulus
+  register: mysql_client_cert_modulus
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  when: mysql_client_cert.stat.exists
+
+- name: Check MySQL client key modulus
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - rsa
+      - -in
+      - /var/lib/mysql/client-key.pem
+      - -noout
+      - -modulus
+  register: mysql_client_key_modulus
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  when: mysql_client_key.stat.exists
+
+- name: Remove mismatched MySQL client certificate files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/mysql/client-cert.pem
+    - /var/lib/mysql/client-key.pem
+    - /var/lib/mysql/client-req.pem
+  when: >-
+    mysql_client_key.stat.exists != mysql_client_cert.stat.exists
+    or (
+      mysql_client_key.stat.exists
+      and mysql_client_cert.stat.exists
+      and (
+        mysql_client_key_modulus.rc != 0
+        or mysql_client_cert_modulus.rc != 0
+        or mysql_client_key_modulus.stdout != mysql_client_cert_modulus.stdout
+      )
+    )
+
+- name: Generate MySQL client certificate request
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -newkey
+      - rsa:4096
+      - -nodes
+      - -subj
+      - /CN=MySQL_Server_Auto_Generated_Client_Certificate
+      - -keyout
+      - /var/lib/mysql/client-key.pem
+      - -out
+      - /var/lib/mysql/client-req.pem
+    creates: /var/lib/mysql/client-key.pem
+
+- name: Sign MySQL client certificate
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - x509
+      - -req
+      - -in
+      - /var/lib/mysql/client-req.pem
+      - -CA
+      - /var/lib/mysql/ca.pem
+      - -CAkey
+      - /var/lib/mysql/ca-key.pem
+      - -CAcreateserial
+      - -days
+      - "3650"
+      - -out
+      - /var/lib/mysql/client-cert.pem
+    creates: /var/lib/mysql/client-cert.pem
+
+- name: Configure OpenSSL for MySQL certificate
+  ansible.builtin.template:
+    src: openssl.cnf.j2
+    dest: /var/lib/mysql/openssl.cnf
+    owner: root
+    group: root
+    mode: "0644"
+  register: mysql_openssl_config
+
+- name: Remove MySQL certificate when OpenSSL configuration changes  # noqa: no-handler
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/mysql/server-cert.pem
+    - /var/lib/mysql/server-key.pem
+    - /var/lib/mysql/server-req.pem
+  when: mysql_openssl_config.changed
+
+- name: Generate MySQL server certificate request
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -nodes
+      - -newkey
+      - rsa:4096
+      - -keyout
+      - /var/lib/mysql/server-key.pem
+      - -out
+      - /var/lib/mysql/server-req.pem
+      - -config
+      - /var/lib/mysql/openssl.cnf
+      - -reqexts
+      - req_ext
+    creates: /var/lib/mysql/server-req.pem
+  notify:
+    - Restart MySQL
+
+- name: Sign MySQL server certificate
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - x509
+      - -req
+      - -in
+      - /var/lib/mysql/server-req.pem
+      - -CA
+      - /var/lib/mysql/ca.pem
+      - -CAkey
+      - /var/lib/mysql/ca-key.pem
+      - -CAcreateserial
+      - -days
+      - "3650"
+      - -out
+      - /var/lib/mysql/server-cert.pem
+      - -extfile
+      - /var/lib/mysql/openssl.cnf
+      - -extensions
+      - req_ext
+    creates: /var/lib/mysql/server-cert.pem
+  notify:
+    - Restart MySQL
+
+- name: Configure MySQL TLS CA
+  ansible.builtin.lineinfile:
+    path: "{{ mysql_server_config_file }}"
+    regexp: '^\s*ssl-ca\s*(=|$)'
+    line: ssl-ca = /var/lib/mysql/ca.pem
+  notify:
+    - Restart MySQL
+
+- name: Configure MySQL TLS certificate
+  ansible.builtin.lineinfile:
+    path: "{{ mysql_server_config_file }}"
+    regexp: '^\s*ssl-cert\s*(=|$)'
+    line: ssl-cert = /var/lib/mysql/server-cert.pem
+  notify:
+    - Restart MySQL
+
+- name: Configure MySQL TLS key
+  ansible.builtin.lineinfile:
+    path: "{{ mysql_server_config_file }}"
+    regexp: '^\s*ssl-key\s*(=|$)'
+    line: ssl-key = /var/lib/mysql/server-key.pem
+  notify:
+    - Restart MySQL
+
+- name: Set MySQL certificate permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: mysql
+    group: mysql
+    mode: "{{ item.mode }}"
+  loop:
+    - path: /var/lib/mysql/ca.pem
+      mode: "0640"
+    - path: /var/lib/mysql/ca-key.pem
+      mode: "0640"
+    - path: /var/lib/mysql/server-cert.pem
+      mode: "0640"
+    - path: /var/lib/mysql/server-key.pem
+      mode: "0640"
+    - path: /var/lib/mysql/client-cert.pem
+      mode: "0640"
+    - path: /var/lib/mysql/client-key.pem
+      mode: "0640"

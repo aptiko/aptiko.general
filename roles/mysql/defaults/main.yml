@@ -1,4 +1,5 @@
 ---
 
 mysql_allowed_client_ips: ""
+mysql_fqdn: "{{ inventory_hostname }}"
 mysql_config: {}

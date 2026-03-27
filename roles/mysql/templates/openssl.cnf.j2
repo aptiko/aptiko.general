@@ -1,0 +1,22 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+x509_extensions = req_ext
+
+[dn]
+CN = {{ mysql_fqdn }}
+
+[req_ext]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+{% if mysql_fqdn is match('^([0-9]{1,3}\\.){3}[0-9]{1,3}$') %}
+IP.1 = {{ mysql_fqdn }}
+{% else %}
+DNS.1 = {{ mysql_fqdn }}
+{% endif %}

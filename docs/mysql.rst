@@ -20,6 +20,15 @@ mysql_root_password
   The password of the mysql ``root`` user.  Usually you will store this
   in the vault.
 
+mysql_fqdn
+  Default: ``{{ inventory_hostname }}``. The fully-qualified domain name
+  to use for the MySQL server certificate. The role uses or creates a CA
+  in :file:`/var/lib/mysql/ca.pem`, creates client certificate files when
+  they are missing, replaces
+  :file:`/var/lib/mysql/server-cert.pem` and
+  :file:`/var/lib/mysql/server-key.pem`, and configures MySQL to use
+  those files.
+
 mysql_config
   Dictionary of configuration variables, like this::
 
