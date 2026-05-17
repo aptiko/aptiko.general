@@ -152,3 +152,9 @@
     line: "proto tcp saddr ({{ prometheus_server_ips }}) ACCEPT;"
   notify: Reload ferm
   when: prometheus_server_ips | default('') | length > 0
+
+- name: Update and check for reboots
+  ansible.builtin.import_tasks: update.yml
+  tags:
+    - never
+    - update

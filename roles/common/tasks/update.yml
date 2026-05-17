@@ -1,0 +1,43 @@
+---
+- name: Make sure aptitude and needrestart are installed
+  ansible.builtin.apt:
+    name:
+      - aptitude
+      - needrestart
+
+- name: Update and upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+
+- name: Autoremove unused packages
+  ansible.builtin.apt:
+    autoremove: true
+
+- name: Check for needed restarts
+  ansible.builtin.command: needrestart -b
+  register: needrestart
+  check_mode: false
+  changed_when: false
+
+- name: Check if needrestart says a restart is needed
+  ansible.builtin.set_fact:
+    common_restart_needed: >
+      {{
+        needrestart.stdout_lines | select('match', '^NEEDRESTART-KSTA: [23]') | list | length > 0
+        or
+        needrestart.stdout_lines | select('match', '^NEEDRESTART-(SVC|CONT|SESS):') | list | length > 0
+      }}
+
+- name: Warn if needrestart says a restart is needed
+  ansible.builtin.debug:
+    msg: "{{ ansible_host }} needs a restart according to needrestart"
+  changed_when: true
+  when: common_restart_needed
+
+- name: Restart system if needed
+  ansible.builtin.reboot:
+    msg: "Rebooting because needrestart reported a system restart is needed"
+  when: >
+    'restart' in ansible_run_tags
+    and common_restart_needed

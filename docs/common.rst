@@ -56,6 +56,19 @@ Parameters
    are duplicated in :file:`/var/log/syslog`. Setting this to ``false``
    deactivates this. The default is ``true``.
 
+Updates
+=======
+
+The role contains an update task set that performs ``apt update``, ``apt
+upgrade``, ``apt autoremove``, and checks whether a restart is required.
+Run it like this (this will restart the machine if needed)::
+
+    ansible-playbook playbook.yml --tags update,restart
+
+If you don't specify the ``restart`` tag, the machines will not be
+automatically restarted; only a warning will be shown if a restart is
+needed.
+
 Firewall
 ========
 
