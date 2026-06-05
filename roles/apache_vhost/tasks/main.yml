@@ -41,7 +41,7 @@
   copy:
     content: '{{ cert }}{{ chain_certificates|default("")|join("") }}'
     dest: /etc/apache2/certs/{{ server_name }}.chained.ssl.crt
-  when: cert is defined and cert
+  when: cert is defined and cert != ""
   notify:
   - Restart apache
 
