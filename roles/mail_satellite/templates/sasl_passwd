@@ -1,1 +1,0 @@
-[{{ smarthost }}]:{{ smarthostport }} {{ smarthostusername }}:{{ smarthostpassword }}

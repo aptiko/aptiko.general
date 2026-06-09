@@ -6,7 +6,7 @@
 
 - name: Setup /etc/mailname
   ansible.builtin.copy:
-    content: "{{ mailname }}"
+    content: "{{ mail_satellite_mailname }}"
     dest: /etc/mailname
     mode: '0644'
   notify:
@@ -14,7 +14,7 @@
 
 - name: Configure Postfix
   ansible.builtin.template:
-    src: main.cf
+    src: main.cf.j2
     dest: /etc/postfix/main.cf
     mode: '0644'
   notify:
@@ -22,10 +22,10 @@
 
 - name: Setup authentication
   ansible.builtin.template:
-    src: sasl_passwd
+    src: sasl_passwd.j2
     dest: /etc/postfix/sasl_passwd
     mode: '0600'
-  when: smarthostusername | length > 0
+  when: mail_satellite_smarthostusername | length > 0
   notify:
     - Compile sasl_passwd
 
@@ -39,8 +39,8 @@
     path: /etc/postfix/virtual
     create: true
     regexp: "^{{ item.key }}@"
-    line: "{{ item.key }}@{{ mailname }} {{ item.value }}"
+    line: "{{ item.key }}@{{ mail_satellite_mailname }} {{ item.value }}"
     mode: '0644'
-  loop: "{{ mail_aliases | dict2items }}"
+  loop: "{{ mail_satellite_mail_aliases | dict2items }}"
   notify:
     - Postmap aliases

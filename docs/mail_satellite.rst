@@ -27,26 +27,26 @@ It's mainly useful in two cases:
 Parameters
 ==========
 
-mailname
+mail_satellite_mailname
   The default domain name that will be used for email addresses that do
   not contain ``@``.
 
-smarthost
+mail_satellite_smarthost
   The smart host, such as ``relay.example.com``.
 
-smarthostport
+mail_satellite_smarthostport
   The smarthost port, such as 25 or 587 (the default). If the outgoing
   port is 465 or 587, encrypted connections are forced.
 
-smarthostusername, smarthostpassword
+mail_satellite_smarthostusername, mail_satellite_smarthostpassword
   The username and password to connect to the smart host. If unspecified
   it will be connecting unauthenticated.
 
-masquerade_domains
+mail_satellite_masquerade_domains
   Optional. This will be used as Postfix's masquerade_domains_
-  parameter.  For example, if ``mailname`` is
+  parameter.  For example, if ``mail_satellite_mailname`` is
   ``nextcloud.digigov.grnet.gr``, you may want to use
-  ``masquerade_domains = grnet.gr`` so that the sender
+  ``mail_satellite_masquerade_domains = grnet.gr`` so that the sender
   ``root@nextcloud.digigov.grnet.gr`` will be converted to ``grnet.gr``.
 
   .. _masquerade_domains: http://www.postfix.org/postconf.5.html#masquerade_domains
@@ -55,10 +55,10 @@ mail_satellite_canonical_sender
   Optional. If set, the sender will be rewritten to this; both the envelope
   sender and the header sender.
 
-mail_aliases
+mail_satellite_mail_aliases
   A hash that maps local emails to actual addresses, for example::
 
-    mail_aliases:
+    mail_satellite_mail_aliases:
       root: antonis@example.com,panagiotis@example.com
       www-data: root
 
@@ -71,7 +71,7 @@ mail_aliases
 
   .. _virtual_alias_maps: http://www.postfix.org/postconf.5.html#virtual_alias_maps
 
-inet_interfaces
+mail_satellite_inet_interfaces
   If ``loopback-only`` (the default), it listens only on the local
   interface. Change it to ``all`` (or any value accepted by the postfix
   ``inet_interfaces`` parameter) so that it listens on all interfaces.
@@ -84,11 +84,15 @@ inet_interfaces
         line: "proto tcp dport smtp saddr (1.2.3.4 5.6.7.8) ACCEPT;"
       notify: Reload ferm
 
-  You also need to set ``my_networks``.
+  You also need to set ``mail_satellite_mynetworks``.
 
-mynetworks
+mail_satellite_mynetworks
   The networks that are allowed to relay. If unset, only the localhost
   from the local interface is allowed to send emails. If you set it,
   don't specify the localhost, this will be included anyway.
 
-  See also ``inet_interfaces``.
+  See also ``mail_satellite_inet_interfaces``.
+
+The old unprefixed variable names are still accepted for backwards
+compatibility, but new playbooks should use the ``mail_satellite_*``
+names above.

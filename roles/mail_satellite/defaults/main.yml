@@ -1,8 +1,12 @@
 ---
-smarthostport: 587
-smarthostusername: ""
-masquerade_domains: null
-mail_aliases: {}
-inet_interfaces: loopback-only
-mynetworks: ""
+mail_satellite_mailname: "{{ mailname }}"
+mail_satellite_smarthost: "{{ smarthost }}"
+mail_satellite_smarthostport: "{{ smarthostport | default(587) }}"
+mail_satellite_smarthostusername: "{{ smarthostusername | default('') }}"
+mail_satellite_smarthostpassword: "{{ smarthostpassword }}"
+mail_satellite_masquerade_domains: "{{ masquerade_domains | default(none) }}"
+mail_satellite_mail_aliases: "{{ mail_aliases | default({}) }}"
+mail_satellite_inet_interfaces: >-
+  {{ inet_interfaces | default('loopback-only') }}
+mail_satellite_mynetworks: "{{ mynetworks | default('') }}"
 mail_satellite_canonical_sender: false

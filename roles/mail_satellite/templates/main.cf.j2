@@ -1,20 +1,20 @@
 myorigin = /etc/mailname
 biff = no
 compatibility_level = 3
-relayhost = [{{ smarthost }}]:{{ smarthostport }}
-mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 {{ mynetworks }}
-inet_interfaces = {{ inet_interfaces }}
+relayhost = [{{ mail_satellite_smarthost }}]:{{ mail_satellite_smarthostport }}
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 {{ mail_satellite_mynetworks }}
+inet_interfaces = {{ mail_satellite_inet_interfaces }}
 virtual_alias_maps = hash:/etc/postfix/virtual
-masquerade_domains = {{ masquerade_domains }}
-{% if smarthostport == 465 %}
+masquerade_domains = {{ mail_satellite_masquerade_domains }}
+{% if mail_satellite_smarthostport == 465 %}
 smtp_tls_wrappermode = yes
 smtp_tls_security_level = encrypt
 {% endif %}
-{% if smarthostport == 587 %}
+{% if mail_satellite_smarthostport == 587 %}
 smtp_tls_note_starttls_offer = yes
 smtp_tls_security_level = encrypt
 {% endif %}
-{% if smarthostusername %}
+{% if mail_satellite_smarthostusername %}
 smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 smtp_sasl_security_options = noanonymous

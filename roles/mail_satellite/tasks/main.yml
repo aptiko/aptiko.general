@@ -1,5 +1,7 @@
 ---
-- tags:
+- name: Mail satellite configuration
+  tags:
     - mail
   block:
-    - include_tasks: all.yml
+    - name: Include mail satellite tasks
+      ansible.builtin.include_tasks: all.yml
