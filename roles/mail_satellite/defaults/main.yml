@@ -5,3 +5,4 @@ masquerade_domains: null
 mail_aliases: {}
 inet_interfaces: loopback-only
 mynetworks: ""
+mail_satellite_canonical_sender: false

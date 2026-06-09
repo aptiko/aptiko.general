@@ -1,43 +1,46 @@
 ---
 - name: Install Postfix
-  apt:
+  ansible.builtin.apt:
     name:
       - postfix
 
 - name: Setup /etc/mailname
-  copy:
+  ansible.builtin.copy:
     content: "{{ mailname }}"
     dest: /etc/mailname
+    mode: '0644'
   notify:
     - Reload Postfix
 
 - name: Configure Postfix
-  template:
+  ansible.builtin.template:
     src: main.cf
     dest: /etc/postfix/main.cf
+    mode: '0644'
   notify:
     - Reload Postfix
 
 - name: Setup authentication
-  template:
+  ansible.builtin.template:
     src: sasl_passwd
     dest: /etc/postfix/sasl_passwd
-    mode: 0600
+    mode: '0600'
   when: smarthostusername | length > 0
   notify:
     - Compile sasl_passwd
 
 - name: Start Postfix
-  service:
+  ansible.builtin.service:
     name: postfix
     state: started
 
 - name: Set virtual aliases
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/postfix/virtual
-    create: yes
+    create: true
     regexp: "^{{ item.key }}@"
     line: "{{ item.key }}@{{ mailname }} {{ item.value }}"
+    mode: '0644'
   loop: "{{ mail_aliases | dict2items }}"
   notify:
     - Postmap aliases

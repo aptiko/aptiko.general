@@ -19,3 +19,7 @@ smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 smtp_sasl_security_options = noanonymous
 {% endif %}
+{% if mail_satellite_canonical_sender %}
+sender_canonical_classes = envelope_sender, header_sender
+sender_canonical_maps = static:{{ mail_satellite_canonical_sender }}
+{% endif %}

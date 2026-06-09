@@ -51,6 +51,10 @@ masquerade_domains
 
   .. _masquerade_domains: http://www.postfix.org/postconf.5.html#masquerade_domains
 
+mail_satellite_canonical_sender
+  Optional. If set, the sender will be rewritten to this; both the envelope
+  sender and the header sender.
+
 mail_aliases
   A hash that maps local emails to actual addresses, for example::
 
