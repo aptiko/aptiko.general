@@ -1,0 +1,123 @@
+---
+
+- name: Enable mod_proxy
+  community.general.apache2_module:
+    name: proxy
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_proxy_http
+  community.general.apache2_module:
+    name: proxy_http
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_proxy_fcgi
+  community.general.apache2_module:
+    name: proxy_fcgi
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_headers
+  community.general.apache2_module:
+    name: headers
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_rewrite
+  community.general.apache2_module:
+    name: rewrite
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_ssl
+  community.general.apache2_module:
+    name: ssl
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_cgid
+  community.general.apache2_module:
+    name: cgid
+    state: present
+  notify:
+    - Restart web server
+
+- name: Enable mod_http2
+  community.general.apache2_module:
+    name: http2
+    state: present
+  notify:
+    - Restart web server
+
+- name: Configure default site certificate
+  ansible.builtin.include_tasks: default_site_cert.yml
+  when: webserver_default_site_letsencrypt_domain != ""
+
+- name: Create snippets directory
+  ansible.builtin.file:
+    name: /etc/{{ webserver_webserver_dirname }}/snippets
+    state: directory
+    mode: '0755'
+
+- name: Create snippets directory for default site
+  ansible.builtin.file:
+    name: /etc/{{ webserver_webserver_dirname }}/snippets/default-site
+    state: directory
+    mode: '0755'
+
+- name: Apache default site main snippet
+  ansible.builtin.template:
+    src: apache/default-site-main-snippet.conf
+    dest: /etc/{{ webserver_webserver_dirname }}/snippets/default-site/main.conf
+    mode: '0644'
+  notify:
+    - Restart web server
+
+# Custom configuration
+- name: Install apache custom configuration
+  ansible.builtin.copy:
+    src: apache2-custom.conf
+    dest: /etc/{{ webserver_webserver_dirname }}/conf-available/custom.conf
+    mode: '0644'
+  notify:
+    - Restart web server
+
+- name: Check if custom configuration is enabled
+  ansible.builtin.command: test -f /etc/{{ webserver_webserver_dirname }}/conf-enabled/custom.conf
+  register: check_custom_conf
+  ignore_errors: true
+  changed_when: false
+  check_mode: false
+
+- name: Enable custom configuration
+  ansible.builtin.command: a2enconf custom
+  when: check_custom_conf.rc != 0
+  changed_when: true
+  notify:
+    - Restart web server
+
+# Deactivate other-vhosts-access-log
+- name: Check if other-vhosts-access-log is enabled
+  ansible.builtin.command: test -f /etc/{{ webserver_webserver_dirname }}/conf-enabled/other-vhosts-access-log.conf
+  register: check_other_vhosts_access_log
+  ignore_errors: true
+  changed_when: false
+  check_mode: false
+
+- name: Disable other-vhosts-access-log
+  ansible.builtin.command: a2disconf other-vhosts-access-log
+  changed_when: true
+  when: check_other_vhosts_access_log.rc == 0
+  notify:
+    - Restart web server
+
+- name: Configure awstats
+  ansible.builtin.include_tasks: awstats.yml
+  when: webserver_use_awstats

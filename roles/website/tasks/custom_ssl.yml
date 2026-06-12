@@ -1,0 +1,14 @@
+---
+- name: Install SSL certificate
+  ansible.builtin.copy:
+    content: '{{ website_cert }}{{ website_chain_certificates | default("") | join("") }}'
+    dest: /etc/ssl/certs/{{ website_domain }}.chained.ssl.crt
+    mode: "0644"
+  notify: Restart web server
+
+- name: Install SSL private key
+  ansible.builtin.copy:
+    content: "{{ website_private_key }}"
+    dest: /etc/ssl/private/{{ website_domain }}.ssl.key
+    mode: "0640"
+  notify: Restart web server

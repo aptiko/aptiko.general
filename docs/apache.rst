@@ -7,6 +7,9 @@ apache
 Overview
 ========
 
+This role is deprecated. Use :ref:`webserver` with
+``webserver_type: apache`` instead.
+
 This is an Ansible role for installing apache on Debian. It also
 optionally installs awstats.
 

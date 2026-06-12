@@ -1,0 +1,81 @@
+---
+- name: Validate webserver_type
+  ansible.builtin.assert:
+    that:
+      - webserver_type is defined
+      - webserver_type in ["apache", "nginx"]
+    fail_msg: webserver_type must be set to "apache" or "nginx"
+
+- name: Set internal webserver dirname
+  ansible.builtin.set_fact:
+    webserver_webserver_dirname: "{{ 'apache2' if webserver_type == 'apache' else 'nginx' }}"
+
+- name: Migrate from nginx to apache
+  ansible.builtin.include_tasks: apache_migrate_from_nginx.yml
+  when: webserver_type == "apache"
+
+- name: Migrate from apache to nginx
+  ansible.builtin.include_tasks: nginx_migrate_from_apache.yml
+  when: webserver_type == "nginx"
+
+- name: Install apt packages for webserver
+  ansible.builtin.apt:
+    name: "{{ webserver_packages }}"
+  vars:
+    webserver_packages: >-
+      {{
+        [
+          'apache2',
+          'certbot',
+          'python3-certbot-apache',
+          'python3-certbot-dns-cloudflare',
+          'ssl-cert',
+          'acl'
+        ]
+        if webserver_type == 'apache'
+        else
+        [
+          'nginx',
+          'ssl-cert',
+          'certbot',
+          'python3-certbot-nginx'
+        ]
+      }}
+
+- name: Ensure /etc/aliases exists
+  ansible.builtin.file:
+    path: /etc/aliases
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+    mode: '0644'
+
+- name: Set www-data mail alias
+  ansible.builtin.lineinfile:
+    dest: /etc/aliases
+    line: "www-data: root"
+    regexp: "^www-data:.*$"
+
+- name: Perform additional apache configuration
+  ansible.builtin.include_tasks: apache_additional_config.yml
+  when: webserver_type == "apache"
+
+- name: Default webserver site
+  ansible.builtin.template:
+    src: "{{ webserver_type }}/default-site.conf"
+    dest: "/etc/{{ webserver_webserver_dirname }}/sites-available/{{ '000-default.conf' if webserver_type == 'apache' else 'default' }}"
+    mode: '0644'
+  notify: "{{ 'Restart web server' if webserver_type == 'apache' else 'Reload web server' }}"
+
+- name: Create /var/www
+  ansible.builtin.file:
+    state: directory
+    dest: /var/www
+    mode: '0755'
+
+- name: Allow webserver firewall
+  ansible.builtin.lineinfile:
+    path: /etc/ferm/ansible-late
+    line: "proto tcp dport (http https) ACCEPT;"
+  notify: Reload ferm
+  when: webserver_use_ferm

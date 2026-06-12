@@ -1,0 +1,50 @@
+---
+# Awstats
+# If website_use_awstats is false for the "webserver" role but unspecified
+# (i.e. true) for the website, then there's a problem because it tries to
+# configure awstats for the website although it's not enabled for apache.
+# We use the existence of /etc/awstats as a proxy for website_use_awstats
+# of the "webserver" role; if absent, it means awstats isn't configured for
+# apache, thus we don't configure the website either.
+- name: Check if /etc/awstats exists
+  ansible.builtin.stat:
+    path: /etc/awstats
+  register: awstats_config_dir
+  ignore_errors: true
+  check_mode: false
+  changed_when: false
+
+- name: Setup awstats
+  ansible.builtin.template:
+    src: apache/awstats.site.conf
+    dest: /etc/awstats/awstats.{{ website_domain }}.conf
+    mode: "0644"
+  when: website_use_awstats and awstats_config_dir.stat.exists
+
+- name: Create awstats directory for {{ website_domain }}
+  ansible.builtin.file:
+    state: directory
+    dest: /var/lib/awstats/{{ website_domain }}
+    owner: www-data
+    group: www-data
+    mode: "0750"
+  when: website_use_awstats and awstats_config_dir.stat.exists
+
+- name: Install passlib
+  ansible.builtin.apt:
+    name: python3-passlib
+  when: website_use_awstats and awstats_config_dir.stat.exists
+
+- name: Setup awstats users
+  community.general.htpasswd:
+    path: /etc/{{ website_webserver_dirname }}/{{ website_domain }}.htpasswd
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    owner: root
+    group: www-data
+    mode: "0640"
+  when:
+    - website_use_awstats
+    - website_awstats_auth_type == "Basic"
+    - awstats_config_dir.stat.exists
+  loop: "{{ website_awstats_users }}"

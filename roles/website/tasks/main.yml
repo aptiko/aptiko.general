@@ -1,0 +1,76 @@
+---
+- name: Validate webserver_type
+  ansible.builtin.assert:
+    that:
+      - webserver_type is defined
+      - webserver_type in ["apache", "nginx"]
+    fail_msg: webserver_type must be set to "apache" or "nginx"
+
+- name: Validate website_ssl
+  ansible.builtin.assert:
+    that:
+      - website_ssl is defined
+      - website_ssl in ["off", "letsencrypt", "self-signed", "custom"]
+      - not website_force_ssl or website_ssl != "off"
+      - website_ssl != "letsencrypt" or website_letsencrypt_admin is defined
+      - website_ssl != "custom" or website_cert is defined
+      - website_ssl != "custom" or website_private_key is defined
+    fail_msg: website_ssl must be one of off, letsencrypt, self-signed, or custom, and its required companion variables must be set
+
+- name: Set internal webserver dirname
+  ansible.builtin.set_fact:
+    website_webserver_dirname: "{{ 'apache2' if webserver_type == 'apache' else 'nginx' }}"
+
+# Let's Encrypt
+- name: Check if letsencrypt certificate exists
+  ansible.builtin.stat:
+    path: /etc/letsencrypt/live/{{ website_letsencrypt_domain }}
+  register: letsencryptdir
+  when: website_ssl == "letsencrypt"
+
+- name: Ensure ferm allows certbot
+  ansible.builtin.meta: flush_handlers
+  when: website_ssl == "letsencrypt"
+
+- name: Install letsencrypt certificate
+  ansible.builtin.command: >
+    certbot certonly --{{ webserver_type }} --non-interactive --agree-tos
+    -m {{ website_letsencrypt_admin }} -d {{ website_letsencrypt_domain }}
+  when: website_ssl == "letsencrypt" and not letsencryptdir.stat.exists
+  changed_when: true
+
+# Site setup
+- name: Configuration file for {{ website_domain }}
+  ansible.builtin.template:
+    src: "{{ webserver_type }}/site.conf"
+    dest: "/etc/{{ website_webserver_dirname }}/sites-available/{{ website_domain }}.conf"
+    mode: "0644"
+  notify: "{{ 'Restart web server' if webserver_type == 'apache' else 'Reload web server' }}"
+
+- name: Enable site {{ website_domain }}
+  ansible.builtin.file:
+    state: link
+    src: "/etc/{{ website_webserver_dirname }}/sites-available/{{ website_domain }}.conf"
+    dest: "/etc/{{ website_webserver_dirname }}/sites-enabled/{{ website_domain }}.conf"
+    mode: "0644"
+  notify: "{{ 'Restart web server' if webserver_type == 'apache' else 'Reload web server' }}"
+
+- name: Create snippets directory for {{ website_domain }}
+  ansible.builtin.file:
+    name: "/etc/{{ website_webserver_dirname }}/snippets/{{ website_domain }}"
+    state: directory
+    mode: "0755"
+
+- name: Create directory {{ website_document_root }}
+  ansible.builtin.file:
+    state: directory
+    dest: "{{ website_document_root }}"
+    mode: "0755"
+
+- name: Install custom SSL assets
+  ansible.builtin.include_tasks: custom_ssl.yml
+  when: website_ssl == "custom"
+
+- name: Configure awstats
+  ansible.builtin.include_tasks: apache_awstats.yml
+  when: webserver_type == "apache"

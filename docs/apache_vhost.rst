@@ -7,6 +7,9 @@ apache_vhost
 Overview
 ========
 
+This role is deprecated. Use :ref:`website` with
+``webserver_type: apache`` instead.
+
 This is an Ansible role for configuring apache sites on Debian. It also
 optionally configures awstats. It depends on :ref:`apache`, which must
 also be listed as a role for the server. Use ``apache_vhost`` like

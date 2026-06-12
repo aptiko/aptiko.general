@@ -1,0 +1,11 @@
+---
+webserver_use_awstats: false
+webserver_use_ferm: true
+webserver_awstats_domains: []
+webserver_default_site_awstats_auth_type: "Basic"
+webserver_default_site_awstats_users: []
+webserver_default_site_awstats_extra_config: ""
+webserver_default_site_document_root: "/var/www/html"
+webserver_default_site_extras: "Redirect 404 /"
+webserver_default_site_letsencrypt_domain: ""
+webserver_default_site_force_ssl: false

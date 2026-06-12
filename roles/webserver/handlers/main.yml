@@ -1,0 +1,15 @@
+---
+- name: Restart web server
+  ansible.builtin.service:
+    name: "{{ webserver_webserver_dirname }}"
+    state: restarted
+
+- name: Reload web server
+  ansible.builtin.service:
+    name: "{{ webserver_webserver_dirname }}"
+    state: reloaded
+
+- name: Reload ferm
+  ansible.builtin.service:
+    name: ferm
+    state: reloaded

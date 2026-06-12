@@ -21,6 +21,8 @@ Reference
    :caption: General roles:
 
 .. toctree::
+   webserver
+   website
    apache
    apache_vhost
    nginx

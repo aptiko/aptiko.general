@@ -2,16 +2,8 @@
 
 dependencies:
 
-- role: aptiko.general.apache_vhost
-  server_name: "{{ grafana_server_name }}"
-  ssl_extras: |
-      SSLProxyEngine on
-  letsencrypt: true
-  force_ssl: yes
-  when: '"aptiko.general.apache" in ansible_role_names and grafana_root_path == "/"'
-
-- role: aptiko.general.nginx_site
-  server_name: "{{ grafana_server_name }}"
-  letsencrypt: true
-  force_ssl: yes
-  when: '"aptiko.general.nginx" in ansible_role_names and grafana_root_path == "/"'
+ - role: aptiko.general.website
+   website_domain: "{{ grafana_server_name }}"
+   website_ssl: letsencrypt
+   website_force_ssl: true
+   when: '"aptiko.general.webserver" in ansible_role_names and grafana_root_path == "/"'

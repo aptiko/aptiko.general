@@ -7,6 +7,9 @@ nginx_site
 Overview
 ========
 
+This role is deprecated. Use :ref:`website` with
+``webserver_type: nginx`` instead.
+
 This is an Ansible role for configuring nginx sites (actually domains,
 which on nginx also have the unfortunate name "servers") on Debian or
 Ubuntu.  It depends on :ref:`nginx`, which must also be listed as a role

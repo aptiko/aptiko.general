@@ -19,9 +19,9 @@
 
 - name: Install Grafana
   ansible.builtin.apt:
-     name:
+    name:
       - grafana
-     update_cache: false
+    update_cache: false
   notify: Set Grafana password
 
 - name: Enable Grafana
@@ -61,13 +61,17 @@
     src: apache-grafana.conf
     dest: /etc/apache2/snippets/{{ grafana_server_name }}/grafana.conf
     mode: "0644"
-  notify: Reload apache
-  when: '"aptiko.general.apache" in ansible_role_names'
+  notify: Reload web server
+  when: >
+    ("aptiko.general.webserver" in ansible_role_names and webserver_type == "apache")
+    or "aptiko.general.apache" in ansible_role_names
 
 - name: Configure nginx for Grafana
   ansible.builtin.template:
     src: nginx-grafana.conf
     dest: /etc/nginx/snippets/{{ grafana_server_name }}/grafana.conf
     mode: "0644"
-  notify: Reload nginx
-  when: '"aptiko.general.nginx" in ansible_role_names'
+  notify: Reload web server
+  when: >
+    ("aptiko.general.webserver" in ansible_role_names and webserver_type == "nginx")
+    or "aptiko.general.nginx" in ansible_role_names

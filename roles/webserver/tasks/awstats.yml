@@ -1,0 +1,65 @@
+---
+- name: Install apt packages required for awstats
+  ansible.builtin.apt:
+    name:
+      - awstats
+      - python3-passlib
+
+- name: Awstats global configuration file
+  ansible.builtin.copy:
+    src: awstats.conf.local
+    dest: /etc/awstats/awstats.conf.local
+    mode: '0644'
+
+- name: Disable awstats static pages
+  ansible.builtin.lineinfile:
+    dest: /etc/default/awstats
+    backrefs: true
+    regexp: '^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
+    line: 'AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
+
+- name: Allow www-data group to read /var/log/{{ webserver_webserver_dirname }}
+  ansible.posix.acl:
+    name: /var/log/{{ webserver_webserver_dirname }}
+    state: present
+    etype: group
+    entity: www-data
+    permissions: rx
+
+- name: Allow all to read new files in /var/log/{{ webserver_webserver_dirname }}
+  ansible.builtin.lineinfile:
+    dest: /etc/logrotate.d/{{ webserver_webserver_dirname }}
+    line: "\tcreate 644 root adm"
+    regexp: '^\s*create '
+
+- name: Allow all to read access.log at /var/log/{{ webserver_webserver_dirname }}
+  ansible.builtin.file:
+    path: /var/log/{{ webserver_webserver_dirname }}/access.log
+    mode: "0644"
+
+- name: Setup awstats
+  ansible.builtin.template:
+    src: apache/awstats.site.conf
+    dest: /etc/awstats/awstats.{{ item }}.conf
+    mode: '0644'
+  loop: "{{ webserver_awstats_domains }}"
+
+- name: Create awstats directories
+  ansible.builtin.file:
+    state: directory
+    dest: /var/lib/awstats/{{ item }}
+    owner: www-data
+    group: www-data
+    mode: "0750"
+  loop: "{{ webserver_awstats_domains }}"
+
+- name: Setup awstats users
+  community.general.htpasswd:
+    path: /etc/{{ webserver_webserver_dirname }}/awstats-global.htpasswd
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    owner: root
+    group: www-data
+    mode: "0640"
+  when: webserver_default_site_awstats_auth_type == "Basic"
+  loop: "{{ webserver_default_site_awstats_users }}"

@@ -7,6 +7,9 @@ nginx
 Overview
 ========
 
+This role is deprecated. Use :ref:`webserver` with
+``webserver_type: nginx`` instead.
+
 This is an Ansible role for installing nginx on Debian or Ubuntu. It
 merely installs the nginx package and performs some essential
 configuration such as allowing ports 80 and 443 through the firewall.

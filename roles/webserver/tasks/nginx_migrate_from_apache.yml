@@ -1,0 +1,51 @@
+---
+# Remove apache stuff
+- name: Uninstall apache apt packages
+  ansible.builtin.apt:
+    state: absent
+    name:
+      - apache2
+      - ssl-cert
+
+- name: Remove /etc/apache2
+  ansible.builtin.file:
+    state: absent
+    path: /etc/apache2
+
+# Does a /var/log/apache2 directory exist? If yes, move it to
+# /var/log/{{ webserver_webserver_dirname }},
+# so that nginx will pick up where apache left off.
+- name: Check if /var/log/apache2 exists
+  ansible.builtin.command: test -d /var/log/apache2
+  register: check_var_log_apache2
+  ignore_errors: true
+  changed_when: false
+  check_mode: false
+
+- name: Check if /var/log/{{ webserver_webserver_dirname }} exists
+  ansible.builtin.stat:
+    path: /var/log/{{ webserver_webserver_dirname }}
+  register: destination_webserver_log_dir
+  changed_when: false
+  check_mode: false
+  when: check_var_log_apache2.rc == 0
+
+- name: If both /var/log/nginx exists and /var/log/apache2 exist, fail
+  ansible.builtin.assert:
+    that:
+      - not destination_webserver_log_dir.stat.exists
+    msg: >
+      I would like to move /var/log/apache2 to /var/log/{{
+      webserver_webserver_dirname }} so that nginx will pick up where apache
+      left off and awstats won't have a gap, but I can't do that because
+      /var/log/{{ webserver_webserver_dirname }} exists. Resolve this conflict
+      manually (delete or rename one of the two directories).
+  when: check_var_log_apache2.rc == 0
+
+- name: Move /var/log/apache2 to /var/log/{{ webserver_webserver_dirname }}
+  ansible.builtin.shell: >
+    mv /var/log/apache2 /var/log/{{ webserver_webserver_dirname }} &&
+    chown -R root:adm /var/log/{{ webserver_webserver_dirname }} &&
+    chmod -R u=rwX,g=rX,o= /var/log/{{ webserver_webserver_dirname }}
+  changed_when: true
+  when: check_var_log_apache2.rc == 0

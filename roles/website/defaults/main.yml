@@ -1,0 +1,9 @@
+---
+website_ssl: "self-signed"
+website_force_ssl: "{{ website_ssl != 'off' }}"
+website_letsencrypt_domain: "{{ website_domain }}"
+website_use_awstats: false
+website_awstats_auth_type: "Basic"
+website_awstats_users: []
+website_awstats_extra_config: ""
+website_document_root: /var/www/{{ website_domain }}
