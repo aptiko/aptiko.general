@@ -1,23 +1,26 @@
 ---
 
 - name: Install apt packages required for awstats
-  apt:
+  ansible.builtin.apt:
     name:
-    - awstats
-    - python3-passlib
+      - awstats
+      - python3-passlib
 
 - name: Awstats global configuration file
-  copy: src=awstats.conf.local dest=/etc/awstats/awstats.conf.local
+  ansible.builtin.copy:
+    src: awstats.conf.local
+    dest: /etc/awstats/awstats.conf.local
+    mode: "0644"
 
 - name: Disable awstats static pages
-  lineinfile: >
-    dest=/etc/default/awstats
-    backrefs=yes
-    regexp='^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
-    line='AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
+  ansible.builtin.lineinfile:
+    dest: /etc/default/awstats
+    backrefs: true
+    regexp: '^AWSTATS_ENABLE_BUILDSTATICPAGES="yes"'
+    line: 'AWSTATS_ENABLE_BUILDSTATICPAGES="no"'
 
 - name: Allow www-data group to read /var/log/apache2 (required by awstats)
-  acl:
+  ansible.posix.acl:
     name: /var/log/apache2
     state: present
     etype: group
@@ -25,29 +28,30 @@
     permissions: rx
 
 - name: Allow all to read new files in /var/log/apache2 (required by awstats)
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/logrotate.d/apache2
     line: "\tcreate 644 root adm"
     regexp: '^\s*create '
 
 - name: Allow all to read /var/log/apache2/access.log (required by awstats)
-  file:
+  ansible.builtin.file:
     path: /var/log/apache2/access.log
-    mode: 0644
+    mode: "0644"
 
 - name: Setup awstats
-  template:
+  ansible.builtin.template:
     src: awstats.site.conf
     dest: /etc/awstats/awstats.{{ item }}.conf
+    mode: "0644"
   loop: "{{ apache_awstats_domains }}"
 
 - name: Create awstats directories
-  file:
+  ansible.builtin.file:
     state: directory
     dest: /var/lib/awstats/{{ item }}
     owner: www-data
     group: www-data
-    mode: 0750
+    mode: "0750"
   loop: "{{ apache_awstats_domains }}"
 
 - name: Setup awstats users
@@ -57,6 +61,6 @@
     password: "{{ item.password }}"
     owner: root
     group: www-data
-    mode: 0640
+    mode: "0640"
   when: apache_default_site_awstats_auth_type == "Basic"
   loop: "{{ apache_default_site_awstats_users }}"

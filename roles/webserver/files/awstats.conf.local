@@ -1,1 +1,2 @@
+LogFormat="%host - %other %time1 %other %methodurl %code %bytesd %refererquot %uaquot %request_time %other %virtualname"
 DirIcons="/awstats-icon"
