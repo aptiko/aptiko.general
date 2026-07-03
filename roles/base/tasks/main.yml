@@ -96,6 +96,22 @@
     line: Port {{ base_ssh_port }}
   notify: Reload ssh
 
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name: fail2ban
+  when: base_use_fail2ban
+
+- name: Configure fail2ban ssh jail
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/base.conf
+    content: |
+      [sshd]
+      enabled = true
+      port = {{ base_ssh_port }}
+    mode: "0644"
+  notify: Restart fail2ban
+  when: base_use_fail2ban
+
 - name: Install bashrc for root
   ansible.builtin.template:
     src: bashrc.j2

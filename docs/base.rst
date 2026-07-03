@@ -11,9 +11,10 @@ This is an Ansible role for applying common configuration to all Debian
 machines. It installs sudo, ntp, pip and ca-certificates, generates
 locales en_US.UTF-8 and en_DK.UTF-8, configures firewall to deny all but
 allow port 22 (additional rules can be specified by other roles; see
-below), installs the root ssh keys and authorized keys, configures ssh
-to allow root to login without password, and sets some options for
-root's shell in :file:`.profile` and :file:`.bashrc`.
+below), installs fail2ban with an ssh jail, installs the root ssh keys
+and authorized keys, configures ssh to allow root to login without
+password, and sets some options for root's shell in :file:`.profile` and
+:file:`.bashrc`.
 
 Parameters
 ==========
@@ -41,6 +42,11 @@ Parameters
    will be allowed. The list can includes both IPv4 and IPv6 addresses
    and networks. The default is to allow access to all addresses. This
    affects the configuration of the firewall.
+
+.. data:: base_use_fail2ban
+
+   Optional. Whether to install fail2ban and enable its ssh jail. The
+   default is ``true``.
 
 .. data:: base_command_line_editing_mode
 

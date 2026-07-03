@@ -14,5 +14,10 @@
     name: systemd-journald
     state: restarted
 
+- name: Restart fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted
+
 - name: Reboot
   ansible.builtin.reboot:
