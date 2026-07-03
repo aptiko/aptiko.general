@@ -1,0 +1,4 @@
+---
+base_ssh_port: 22
+base_ssh_allowed_ip_addresses: []
+base_forward_journal_to_syslog: true

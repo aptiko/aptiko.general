@@ -1,10 +1,8 @@
-.. _common:
+.. _base:
 
-======
-common
-======
-
-This role is deprecated. Use :ref:`base` instead.
+====
+base
+====
 
 Overview
 ========
@@ -20,39 +18,39 @@ root's shell in :file:`.profile` and :file:`.bashrc`.
 Parameters
 ==========
 
-.. data:: ssh_pub_key
-          ssh_priv_key
+.. data:: base_ssh_pub_key
+          base_ssh_priv_key
 
    Optional. Root's RSA ssh keys.
 
-.. data:: root_authorized_keys
+.. data:: base_root_authorized_keys
 
    Optional. A list of strings. Any other keys are removed from root's
    authorized_keys. If unspecified, the root's authorized keys are not
    touched.
 
-.. data:: ssh_port
+.. data:: base_ssh_port
 
    Optional. The port on which the ssh server will be listening. The
    default is 22. If this is changed, you will then need to reconfigure
    Ansible so that, in next runs, it connects to the new port.
 
-.. data:: ssh_allowed_ip_addresses
+.. data:: base_ssh_allowed_ip_addresses
 
    Optional. A list of IP addresses or networks from which access to ssh
    will be allowed. The list can includes both IPv4 and IPv6 addresses
    and networks. The default is to allow access to all addresses. This
    affects the configuration of the firewall.
 
-.. data:: command_line_editing_mode
+.. data:: base_command_line_editing_mode
 
    Optional. Set it to "vi" to enable vi editing mode in bash.
 
-.. data:: prometheus_server_ips
+.. data:: base_prometheus_server_ips
 
    See the :ref:`prometheus` role.
 
-.. data:: forward_journal_to_syslog
+.. data:: base_forward_journal_to_syslog
 
    By default, Debian systems forward journal entries to syslog, so they
    are duplicated in :file:`/var/log/syslog`. Setting this to ``false``

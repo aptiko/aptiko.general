@@ -22,4 +22,4 @@ Options
 use_ferm
   If ``true`` (the default), it drops a configuration snippet in
   :file:`/etc/ferm/ansible-late` in order to allow connections to ports
-  80 and 443.  In this case you must also use the :ref:`common` role.
+  80 and 443.  In this case you must also use the :ref:`base` role.

@@ -76,7 +76,7 @@ mail_satellite_inet_interfaces
   interface. Change it to ``all`` (or any value accepted by the postfix
   ``inet_interfaces`` parameter) so that it listens on all interfaces.
   In that case, you need to care about the firewall yourself. For
-  example, assuming you use the :ref:`common` firewall::
+  example, assuming you use the :ref:`base` firewall::
 
     - name: Allow smtp through firewall
       lineinfile:

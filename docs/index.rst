@@ -15,6 +15,7 @@ Reference
 ---------
 
 .. toctree::
+   base
    common
    duply
    :maxdepth: 1

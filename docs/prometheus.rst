@@ -19,7 +19,7 @@ prometheus_server_ips
   A space-separated list of the IP addresses of the Prometheus server,
   typically an IPv4 and an IPv6 address. This is not actually used by
   this role, but by various other roles; when the parameter is set, then
-  they install exporters as needed (e.g. the :ref:`common` role installs
+  they install exporters as needed (e.g. the :ref:`base` role installs
   the node exporter; the :ref:`postgresql` role installs the postgresql
   exporter; and so on), and they allow these addresses through the
   firewall.
