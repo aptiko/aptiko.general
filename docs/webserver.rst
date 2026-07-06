@@ -13,18 +13,14 @@ redirections as non-cacheable, and changing the default log format. It
 can also set up a Let's Encrypt wildcard certificate and a "default"
 site suitable for serving such wildcard sites. Unless such a wildcard
 setup is needed, the role doesn't do much and should be combined with
-:ref:`website`.
+:ref:`website`. When :data:`base_setup_firewall` is enabled, the role
+allows incoming HTTP and HTTPS connections through the firewall.
 
 Parameters
 ==========
 
 webserver_type
   Must be either ``apache`` or ``nginx``. This parameter is required.
-
-webserver_use_ferm
-  If ``true`` (the default), it drops a configuration snippet in
-  :file:`/etc/ferm/ansible-late` in order to allow connections to ports
-  80 and 443. In this case you must also use the :ref:`base` role.
 
 webserver_use_awstats
   If ``true``, it installs awstats and performs essential global

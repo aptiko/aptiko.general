@@ -80,9 +80,9 @@ mail_satellite_inet_interfaces
 
     - name: Allow smtp through firewall
       lineinfile:
-        path: /etc/ferm/ansible-late
-        line: "proto tcp dport smtp saddr (1.2.3.4 5.6.7.8) ACCEPT;"
-      notify: Reload ferm
+        path: /etc/nftables/ansible-late.nft
+        line: "ip saddr { 1.2.3.4, 5.6.7.8 } tcp dport smtp accept"
+      notify: Reload nftables
 
   You also need to set ``mail_satellite_mynetworks``.
 

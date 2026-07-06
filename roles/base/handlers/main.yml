@@ -4,19 +4,12 @@
     name: ssh
     state: reloaded
 
-- name: Reload ferm
-  ansible.builtin.service:
-    name: ferm
-    state: reloaded
+- name: Import firewall handlers
+  ansible.builtin.import_tasks: firewall.yml
 
 - name: Restart journald
   ansible.builtin.service:
     name: systemd-journald
-    state: restarted
-
-- name: Restart fail2ban
-  ansible.builtin.service:
-    name: fail2ban
     state: restarted
 
 - name: Reboot

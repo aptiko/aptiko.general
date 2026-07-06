@@ -84,11 +84,22 @@
     column_case_sensitive: false
 
 - name: Allow MySQL firewall
-  ansible.builtin.lineinfile:
-    path: /etc/ferm/ansible-late
-    line: "proto tcp dport 3306 saddr ({{ mysql_allowed_client_ips }}) ACCEPT;"
-  notify: Reload ferm
-  when: mysql_allowed_client_ips|length > 0
+  ansible.builtin.blockinfile:
+    path: /etc/nftables/ansible-late.nft
+    marker: "# {mark} ANSIBLE MANAGED BLOCK mysql"
+    block: |
+      {% set mysql_ipv4 = mysql_allowed_client_ips.split() | select('search', '^[^:]+$') | list %}
+      {% set mysql_ipv6 = mysql_allowed_client_ips.split() | select('search', ':') | list %}
+      {% if mysql_ipv4 %}
+      ip saddr { {{ mysql_ipv4 | join(', ') }} } tcp dport 3306 accept
+      {% endif %}
+      {% if mysql_ipv6 %}
+      ip6 saddr { {{ mysql_ipv6 | join(', ') }} } tcp dport 3306 accept
+      {% endif %}
+  notify: Reload nftables
+  when:
+    - base_setup_firewall | default(false)
+    - mysql_allowed_client_ips | length > 0
 
 - name: Create prometheus database user
   community.mysql.mysql_user:

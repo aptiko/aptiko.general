@@ -1,6 +1,5 @@
 ---
 webserver_use_awstats: false
-webserver_use_ferm: true
 webserver_awstats_domains: []
 webserver_default_site_awstats_auth_type: "Basic"
 webserver_default_site_awstats_users: []

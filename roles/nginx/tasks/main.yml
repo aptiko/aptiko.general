@@ -30,7 +30,7 @@
 
 - name: Allow firewall
   lineinfile:
-    path: /etc/ferm/ansible-late
-    line: "proto tcp dport (http https) ACCEPT;"
-  notify: Reload ferm
-  when: use_ferm
+    path: /etc/nftables/ansible-late.nft
+    line: "tcp dport { http, https } accept"
+  notify: Reload nftables
+  when: base_setup_firewall | default(false)

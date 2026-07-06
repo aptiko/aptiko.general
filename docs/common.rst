@@ -11,11 +11,10 @@ Overview
 
 This is an Ansible role for applying common configuration to all Debian
 machines. It installs sudo, ntp, pip and ca-certificates, generates
-locales en_US.UTF-8 and en_DK.UTF-8, configures firewall to deny all but
-allow port 22 (additional rules can be specified by other roles; see
-below), installs the root ssh keys and authorized keys, configures ssh
-to allow root to login without password, and sets some options for
-root's shell in :file:`.profile` and :file:`.bashrc`.
+locales en_US.UTF-8 and en_DK.UTF-8, installs the root ssh keys and
+authorized keys, configures ssh to allow root to login without password,
+and sets some options for root's shell in :file:`.profile` and
+:file:`.bashrc`. It can also configure nftables.
 
 Parameters
 ==========
@@ -43,6 +42,10 @@ Parameters
    will be allowed. The list can includes both IPv4 and IPv6 addresses
    and networks. The default is to allow access to all addresses. This
    affects the configuration of the firewall.
+
+.. data:: base_setup_firewall
+
+   Optional. Whether to configure nftables. The default is ``false``.
 
 .. data:: command_line_editing_mode
 
@@ -74,24 +77,26 @@ needed.
 Firewall
 ========
 
-The role installs ferm. If, in another role or play, you need to add a
-firewall rule, add a line to :file:`/etc/ferm/ansible-late`, like this::
+When :data:`base_setup_firewall` is ``true``, the role installs nftables
+and removes ferm. If, in another role or play, you need to add a firewall
+rule, add a line to
+:file:`/etc/nftables/ansible-late.nft`, like this::
 
     - name: Allow http and https through firewall
       lineinfile:
-        path: /etc/ferm/ansible-late
-        line: "proto tcp dport (http https) ACCEPT;"
-      notify: Reload ferm
+        path: /etc/nftables/ansible-late.nft
+        line: "tcp dport { http, https } accept"
+      notify: Reload nftables
 
-The file :file:`/etc/ferm/ansible-late` is appropriate for such
+The file :file:`/etc/nftables/ansible-late.nft` is appropriate for such
 additional ACCEPT rules. If you want a rule to be applied early, use
-:file:`/etc/ferm/ansible-early` instead. This is useful for DROP rules.
-Example::
+:file:`/etc/nftables/ansible-early.nft` instead. This is useful for DROP
+rules. Example::
 
     - name: Cut misbehaving machine at the firewall
       lineinfile:
-        path: /etc/ferm/ansible-early
-        line: "saddr (18.19.20.21 2a01:4f8:2a01:4f8::/32) DROP;"
-      notify: Reload ferm
+        path: /etc/nftables/ansible-early.nft
+        line: "ip saddr 18.19.20.21 drop"
+      notify: Reload nftables
 
 OBVIOUS WARNING: Make an error and you're locked out!

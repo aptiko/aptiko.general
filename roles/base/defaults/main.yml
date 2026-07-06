@@ -1,4 +1,5 @@
 ---
+base_setup_firewall: false
 base_ssh_port: 22
 base_ssh_allowed_ip_addresses: []
 base_use_fail2ban: true

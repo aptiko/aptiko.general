@@ -1,6 +1,5 @@
 ---
 apache_use_awstats: "{{ use_awstats|default(true) }}"
-apache_use_ferm: "{{ use_ferm|default(true) }}"
 apache_awstats_domains: []
 apache_default_site_awstats_auth_type: "Basic"
 apache_default_site_awstats_users: []

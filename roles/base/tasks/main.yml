@@ -1,15 +1,35 @@
 ---
-- name: Check if we are running on a new server
+- name: Create Aptiko state directory
+  ansible.builtin.file:
+    path: /var/lib/aptiko.general
+    state: directory
+    mode: "0755"
+
+- name: Check if base initialization is complete
+  ansible.builtin.stat:
+    path: /var/lib/aptiko.general/base-initialized
+  register: base_initialized
+
+- name: Check legacy base initialization marker
   ansible.builtin.stat:
     path: /etc/ferm/ansible-early
-  register: stat_result
+  register: legacy_base_initialized
 
 - name: Update and upgrade if this is a new server
   ansible.builtin.apt:
     update_cache: true
     upgrade: true
-  when: not stat_result.stat.exists
+  when:
+    - not base_initialized.stat.exists
+    - not legacy_base_initialized.stat.exists
   notify: Reboot
+
+- name: Mark base initialization complete
+  ansible.builtin.copy:
+    content: ""
+    dest: /var/lib/aptiko.general/base-initialized
+    force: false
+    mode: "0644"
 
 - name: Check if tmp.mount exists
   ansible.builtin.stat:
@@ -32,13 +52,11 @@
   ansible.builtin.apt:
     name:
       - unattended-upgrades
-      - ufw
     state: absent
 
 - name: Install common apt packages
   ansible.builtin.apt:
     name:
-      - ferm
       - sudo
       - ca-certificates
       - ntpsec
@@ -96,55 +114,10 @@
     line: Port {{ base_ssh_port }}
   notify: Reload ssh
 
-- name: Install fail2ban
-  ansible.builtin.apt:
-    name: fail2ban
-  when: base_use_fail2ban
-
-- name: Configure fail2ban ssh jail
-  ansible.builtin.copy:
-    dest: /etc/fail2ban/jail.d/base.conf
-    content: |
-      [sshd]
-      enabled = true
-      port = {{ base_ssh_port }}
-    mode: "0644"
-  notify: Restart fail2ban
-  when: base_use_fail2ban
-
 - name: Install bashrc for root
   ansible.builtin.template:
     src: bashrc.j2
     dest: /root/.bashrc
-    mode: "0644"
-
-# Firewall
-
-- name: Start ferm at boot
-  ansible.builtin.lineinfile:
-    path: "/etc/default/ferm"
-    regexp: "^ENABLED="
-    line: 'ENABLED="yes"'
-
-- name: Set ferm.conf
-  ansible.builtin.template:
-    src: ferm.conf
-    dest: /etc/ferm/ferm.conf
-    mode: "0644"
-  notify: Reload ferm
-
-- name: Create file /etc/ferm/ansible-early
-  ansible.builtin.copy:
-    dest: /etc/ferm/ansible-early
-    force: false
-    content: ""
-    mode: "0644"
-
-- name: Create file /etc/ferm/ansible-late
-  ansible.builtin.copy:
-    dest: /etc/ferm/ansible-late
-    force: false
-    content: ""
     mode: "0644"
 
 - name: Configure systemd-journald
@@ -162,12 +135,9 @@
       - prometheus-node-exporter
   when: base_prometheus_server_ips | default('') | length > 0
 
-- name: Allow Prometheus through firewall
-  ansible.builtin.lineinfile:
-    path: "/etc/ferm/ansible-late"
-    line: "proto tcp saddr ({{ base_prometheus_server_ips }}) ACCEPT;"
-  notify: Reload ferm
-  when: base_prometheus_server_ips | default('') | length > 0
+- name: Configure firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when: base_setup_firewall
 
 - name: Update and check for reboots
   ansible.builtin.import_tasks: update.yml

@@ -7,8 +7,9 @@
     path: /etc/letsencrypt/live/{{ server_name }}
   register: letsencryptdir
 
-- name: Ensure ferm allows certbot
+- name: Ensure firewall allows certbot
   meta: flush_handlers
+  when: base_setup_firewall | default(false)
 
 - name: Install letsencrypt certificate
   command: certbot certonly --apache --non-interactive --agree-tos -m {{ letsencrypt_admin }} -d {% if letsencrypt is sameas true %}{{ server_name }}{% else %}{{ letsencrypt }}{% endif %}

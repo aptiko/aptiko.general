@@ -20,15 +20,11 @@ certificate and a "default" site suitable for serving such wildcard
 sites. Unless such a wildcard setup is needed, the role doesn't do much
 and should be combined with :ref:`apache_vhost`.
 
+When :data:`base_setup_firewall` is enabled, the role allows incoming
+HTTP and HTTPS connections through the firewall.
+
 Parameters
 ==========
-
-apache_use_ferm
-  If ``true`` (the default), it drops a configuration snippet in
-  :file:`/etc/ferm/ansible-late` in order to allow connections to ports
-  80 and 443.  In this case you must also use the :ref:`base` role.
-
-  ``use_ferm`` is a deprecated alias for this parameter.
 
 apache_use_awstats
   If ``true``, it installs awstats and performs some essential global

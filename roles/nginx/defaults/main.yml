@@ -1,3 +1,2 @@
 ---
-use_ferm: true
 nginx_ssl: true

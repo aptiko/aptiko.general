@@ -1,4 +1,5 @@
 ---
+base_setup_firewall: false
 ssh_port: 22
 ssh_allowed_ip_addresses: []
 forward_journal_to_syslog: true

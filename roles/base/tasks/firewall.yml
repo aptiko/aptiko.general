@@ -1,0 +1,104 @@
+---
+- name: Install nftables
+  ansible.builtin.apt:
+    name: nftables
+
+- name: Get nftables version
+  ansible.builtin.command: nft --version
+  register: nftables_version
+  changed_when: false
+
+- name: Get kernel version
+  ansible.builtin.command: uname -r
+  register: kernel_version
+  changed_when: false
+
+- name: Check nftables and kernel versions
+  ansible.builtin.assert:
+    that:
+      - (nftables_version.stdout | regex_search('[0-9]+(?:\.[0-9]+)+')) is version('1.0.9', '>=')
+      - (kernel_version.stdout | regex_search('^[0-9]+(?:\.[0-9]+)+')) is version('6.3', '>=')
+    fail_msg: >-
+      nftables >= 1.0.9 and Linux >= 6.3 are required; found
+      {{ nftables_version.stdout }} on kernel {{ kernel_version.stdout }}.
+      Use Ubuntu>=24.04 or Debian>=13 or update nftables and kernel manually.
+
+- name: Uninstall firewall packages we don't want
+  ansible.builtin.apt:
+    name:
+      - ferm
+      - ufw
+    state: absent
+
+- name: Remove ferm configuration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/ferm
+    - /etc/default/ferm
+
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name: fail2ban
+  when: base_use_fail2ban
+
+- name: Configure fail2ban ssh jail
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/base.conf
+    content: |
+      [sshd]
+      enabled = true
+      port = {{ base_ssh_port }}
+    mode: "0644"
+  notify: Restart fail2ban
+  when: base_use_fail2ban
+
+- name: Create /etc/nftables
+  ansible.builtin.file:
+    state: directory
+    dest: /etc/nftables
+    mode: "0755"
+
+- name: Create file /etc/nftables/ansible-early.nft
+  ansible.builtin.copy:
+    dest: /etc/nftables/ansible-early.nft
+    force: false
+    content: ""
+    mode: "0644"
+
+- name: Create file /etc/nftables/ansible-late.nft
+  ansible.builtin.copy:
+    dest: /etc/nftables/ansible-late.nft
+    force: false
+    content: ""
+    mode: "0644"
+
+- name: Set nftables.conf
+  ansible.builtin.template:
+    src: nftables.conf
+    dest: /etc/nftables.conf
+    mode: "0644"
+  notify: Reload nftables
+
+- name: Start nftables at boot
+  ansible.builtin.service:
+    name: nftables
+    enabled: true
+    state: started
+
+- name: Allow Prometheus through firewall
+  ansible.builtin.blockinfile:
+    path: /etc/nftables/ansible-late.nft
+    marker: "# {mark} ANSIBLE MANAGED BLOCK prometheus"
+    block: |
+      {% set prometheus_ipv4 = base_prometheus_server_ips.split() | select('search', '^[^:]+$') | list %}
+      {% set prometheus_ipv6 = base_prometheus_server_ips.split() | select('search', ':') | list %}
+      {% if prometheus_ipv4 %}
+      ip saddr { {{ prometheus_ipv4 | join(', ') }} } tcp accept
+      {% endif %}
+      {% if prometheus_ipv6 %}
+      ip6 saddr { {{ prometheus_ipv6 | join(', ') }} } tcp accept
+      {% endif %}
+  notify: Reload nftables
+  when: base_prometheus_server_ips | default('') | length > 0

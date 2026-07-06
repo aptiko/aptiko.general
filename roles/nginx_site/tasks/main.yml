@@ -7,8 +7,9 @@
     path: /etc/letsencrypt/live/{{ server_name }}
   register: letsencryptdir
 
-- name: Ensure ferm allows certbot
+- name: Ensure firewall allows certbot
   ansible.builtin.meta: flush_handlers
+  when: base_setup_firewall | default(false)
 
 - name: Install letsencrypt certificate
   ansible.builtin.command: >

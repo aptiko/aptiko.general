@@ -28,9 +28,11 @@
   register: letsencryptdir
   when: website_ssl == "letsencrypt"
 
-- name: Ensure ferm allows certbot
+- name: Ensure firewall allows certbot
   ansible.builtin.meta: flush_handlers
-  when: website_ssl == "letsencrypt"
+  when:
+    - website_ssl == "letsencrypt"
+    - base_setup_firewall | default(false)
 
 - name: Install letsencrypt certificate
   ansible.builtin.command: >

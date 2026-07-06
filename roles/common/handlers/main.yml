@@ -4,10 +4,8 @@
     name: ssh
     state: reloaded
 
-- name: Reload ferm
-  ansible.builtin.service:
-    name: ferm
-    state: reloaded
+- name: Import firewall handlers
+  ansible.builtin.import_tasks: firewall.yml
 
 - name: Restart journald
   ansible.builtin.service:
