@@ -16,7 +16,6 @@ Reference
 
 .. toctree::
    base
-   common
    duply
    :maxdepth: 1
    :caption: General roles:
