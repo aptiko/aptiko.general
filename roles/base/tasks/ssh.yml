@@ -1,4 +1,13 @@
 ---
+- name: Validate base_ssh_permit_root_login
+  ansible.builtin.assert:
+    that: >-
+      base_ssh_permit_root_login in
+      ["yes", "prohibit-password", "forced-commands-only", "no", "ignore"]
+    fail_msg: >-
+      base_ssh_permit_root_login must be "yes", "prohibit-password",
+      "forced-commands-only", "no", or "ignore"
+
 - name: Create /root/.ssh
   ansible.builtin.file:
     state: directory
@@ -26,11 +35,12 @@
     key: "{% for key in base_root_authorized_keys %}{{ key }}\n{% endfor %}"
   when: base_root_authorized_keys | default([]) | length > 0
 
-- name: Allow root to ssh without password
+- name: Configure PermitRootLogin
   ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
     regexp: ^PermitRootLogin
-    line: PermitRootLogin without-password
+    line: PermitRootLogin {{ base_ssh_permit_root_login }}
+  when: base_ssh_permit_root_login != "ignore"
   notify: Reload ssh
 
 - name: Configure ssh port

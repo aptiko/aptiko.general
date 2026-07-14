@@ -5,6 +5,7 @@ base_unattended_upgrades: ignore
 base_sudo: ignore
 base_ntpsec: ignore
 base_locales: []
+base_ssh_permit_root_login: ignore
 base_ssh_port: 22
 base_ssh_allowed_ip_addresses: []
 base_use_fail2ban: true

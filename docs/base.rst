@@ -34,6 +34,12 @@ Parameters
    default is 22. If this is changed, you will then need to reconfigure
    Ansible so that, in next runs, it connects to the new port.
 
+.. data:: base_ssh_permit_root_login
+
+   Optional. Sets the ssh ``PermitRootLogin`` option. Accepted values are
+   ``yes``, ``prohibit-password``, ``forced-commands-only``, ``no``, and
+   ``ignore``. The default, ``ignore``, leaves the option untouched.
+
 .. data:: base_ssh_allowed_ip_addresses
 
    Optional. A list of IP addresses or networks from which access to ssh
