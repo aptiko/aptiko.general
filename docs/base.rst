@@ -8,11 +8,11 @@ Overview
 ========
 
 This is an Ansible role for applying common configuration to all Debian
-machines. It installs sudo, ntp, pip and ca-certificates, generates
-locales en_US.UTF-8 and en_DK.UTF-8, installs the root ssh keys and
+machines. It installs common packages, installs the root ssh keys and
 authorized keys, configures ssh to allow root to login without password,
 and sets some options for root's shell in :file:`.profile` and
-:file:`.bashrc`. It can also configure nftables and fail2ban.
+:file:`.bashrc`. It can also manage locales, sudo, ntpsec,
+unattended-upgrades, nftables and fail2ban.
 
 Parameters
 ==========
@@ -46,6 +46,30 @@ Parameters
    Optional. Whether to configure nftables and fail2ban. The default is
    ``false``.
 
+.. data:: base_disable_tmpfs_for_tmp
+
+   Optional. Whether to prevent :file:`/tmp` from using tmpfs by masking
+   ``tmp.mount``. The default is ``false``.
+
+.. data:: base_unattended_upgrades
+
+   Optional. Set to ``present`` to install unattended-upgrades, ``absent``
+   to uninstall it, or ``ignore`` to leave it untouched. The default is
+   ``ignore``.
+
+.. data:: base_sudo
+          base_ntpsec
+
+   Optional. Set each parameter to ``present`` to install the corresponding
+   package, ``absent`` to uninstall it, or ``ignore`` to leave it untouched.
+   The default is ``ignore``.
+
+.. data:: base_locales
+
+   Optional. A list of locales to generate. If nonempty, the role installs
+   the locales package and generates the listed locales. If empty, the
+   package and locales are left untouched. The default is an empty list.
+
 .. data:: base_use_fail2ban
 
    Optional. Whether to install fail2ban and enable its ssh jail. The
@@ -60,11 +84,12 @@ Parameters
 
    See the :ref:`prometheus` role.
 
-.. data:: base_forward_journal_to_syslog
+.. data:: base_journald_forward_to_syslog
 
    By default, Debian systems forward journal entries to syslog, so they
-   are duplicated in :file:`/var/log/syslog`. Setting this to ``false``
-   deactivates this. The default is ``true``.
+   are duplicated in :file:`/var/log/syslog`. Set this to the string ``"yes"``
+   to enable forwarding, ``"no"`` to disable it, or ``ignore`` to leave the
+   option untouched. The default is ``ignore``.
 
 Updates
 =======

@@ -1,6 +1,11 @@
 ---
 base_setup_firewall: false
+base_disable_tmpfs_for_tmp: false
+base_unattended_upgrades: ignore
+base_sudo: ignore
+base_ntpsec: ignore
+base_locales: []
 base_ssh_port: 22
 base_ssh_allowed_ip_addresses: []
 base_use_fail2ban: true
-base_forward_journal_to_syslog: true
+base_journald_forward_to_syslog: ignore

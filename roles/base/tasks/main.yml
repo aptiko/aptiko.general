@@ -42,34 +42,64 @@
     masked: true
     enabled: false
     daemon_reload: true
-  when: tmp_mount_unit.stat.exists
+  when:
+    - base_disable_tmpfs_for_tmp
+    - tmp_mount_unit.stat.exists
   notify: Reboot
 
 - name: Reboot if needed
   ansible.builtin.meta: flush_handlers
 
-- name: Uninstall packages we don't want
+- name: Validate base_unattended_upgrades
+  ansible.builtin.assert:
+    that: base_unattended_upgrades in ["present", "absent", "ignore"]
+    fail_msg: base_unattended_upgrades must be "present", "absent", or "ignore"
+
+- name: Install or uninstall unattended-upgrades
   ansible.builtin.apt:
-    name:
-      - unattended-upgrades
-    state: absent
+    name: unattended-upgrades
+    state: "{{ base_unattended_upgrades }}"
+  when: base_unattended_upgrades != "ignore"
+
+- name: Validate base_sudo
+  ansible.builtin.assert:
+    that: base_sudo in ["present", "absent", "ignore"]
+    fail_msg: base_sudo must be "present", "absent", or "ignore"
+
+- name: Install or uninstall sudo
+  ansible.builtin.apt:
+    name: sudo
+    state: "{{ base_sudo }}"
+  when: base_sudo != "ignore"
+
+- name: Validate base_ntpsec
+  ansible.builtin.assert:
+    that: base_ntpsec in ["present", "absent", "ignore"]
+    fail_msg: base_ntpsec must be "present", "absent", or "ignore"
+
+- name: Install or uninstall ntpsec
+  ansible.builtin.apt:
+    name: ntpsec
+    state: "{{ base_ntpsec }}"
+  when: base_ntpsec != "ignore"
 
 - name: Install common apt packages
   ansible.builtin.apt:
     name:
-      - sudo
       - ca-certificates
-      - ntpsec
       - debian-goodies
-      - locales
+
+- name: Install locales package
+  ansible.builtin.apt:
+    name: locales
+    state: present
+  when: base_locales | length > 0
 
 - name: Install locales
   community.general.locale_gen:
     name: "{{ item }}"
     state: present
-  with_items:
-    - en_US.UTF-8
-    - en_DK.UTF-8
+  loop: "{{ base_locales }}"
 
 # SSH keys
 
@@ -120,11 +150,20 @@
     dest: /root/.bashrc
     mode: "0644"
 
+- name: Validate base_journald_forward_to_syslog
+  ansible.builtin.assert:
+    that: base_journald_forward_to_syslog in ["yes", "no", "ignore"]
+    fail_msg: base_journald_forward_to_syslog must be "yes", "no", or "ignore"
+
 - name: Configure systemd-journald
-  ansible.builtin.template:
-    src: journald.conf
-    dest: /etc/systemd/journald.conf
-    mode: "0644"
+  community.general.ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: ForwardToSyslog
+    value: "{{ base_journald_forward_to_syslog }}"
+    no_extra_spaces: true
+    create: false
+  when: base_journald_forward_to_syslog != "ignore"
   notify: Restart journald
 
 # Node exporter
