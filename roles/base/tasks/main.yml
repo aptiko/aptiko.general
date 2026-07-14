@@ -101,48 +101,8 @@
     state: present
   loop: "{{ base_locales }}"
 
-# SSH keys
-
-- name: Create /root/.ssh
-  ansible.builtin.file:
-    state: directory
-    dest: /root/.ssh
-    mode: "0700"
-
-- name: Install ssh public key
-  ansible.builtin.copy:
-    content: "{{ base_ssh_pub_key }}\n"
-    dest: /root/.ssh/id_rsa.pub
-    mode: "0755"
-  when: base_ssh_pub_key | default('') | length > 0
-
-- name: Install ssh private key
-  ansible.builtin.copy:
-    content: "{{ base_ssh_priv_key }}\n"
-    dest: /root/.ssh/id_rsa
-    mode: "0600"
-  when: base_ssh_priv_key | default('') | length > 0
-
-- name: Setup root authorized keys
-  ansible.posix.authorized_key:
-    user: root
-    exclusive: true
-    key: "{% for key in base_root_authorized_keys %}{{ key }}\n{% endfor %}"
-  when: base_root_authorized_keys | default([]) | length > 0
-
-- name: Allow root to ssh without password
-  ansible.builtin.lineinfile:
-    dest: /etc/ssh/sshd_config
-    regexp: ^PermitRootLogin
-    line: PermitRootLogin without-password
-  notify: Reload ssh
-
-- name: Configure ssh port
-  ansible.builtin.lineinfile:
-    dest: /etc/ssh/sshd_config
-    regexp: ^#?Port
-    line: Port {{ base_ssh_port }}
-  notify: Reload ssh
+- name: Configure ssh
+  ansible.builtin.import_tasks: ssh.yml
 
 - name: Install bashrc for root
   ansible.builtin.template:
