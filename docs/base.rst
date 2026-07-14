@@ -9,10 +9,8 @@ Overview
 
 This is an Ansible role for applying common configuration to all Debian
 machines. It installs common packages, installs the root ssh keys and
-authorized keys, configures ssh to allow root to login without password,
-and sets some options for root's shell in :file:`.profile` and
-:file:`.bashrc`. It can also manage locales, sudo, ntpsec,
-unattended-upgrades, nftables and fail2ban.
+authorized keys, and configures sshd's root login.  It can also manage
+locales, sudo, ntpsec, unattended-upgrades, nftables and fail2ban.
 
 Parameters
 ==========
@@ -81,10 +79,6 @@ Parameters
    Optional. Whether to install fail2ban and enable its ssh jail. The
    default is ``true``. This has no effect unless
    :data:`base_setup_firewall` is ``true``.
-
-.. data:: base_command_line_editing_mode
-
-   Optional. Set it to "vi" to enable vi editing mode in bash.
 
 .. data:: base_prometheus_server_ips
 

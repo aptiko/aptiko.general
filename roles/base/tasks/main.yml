@@ -104,12 +104,6 @@
 - name: Configure ssh
   ansible.builtin.import_tasks: ssh.yml
 
-- name: Install bashrc for root
-  ansible.builtin.template:
-    src: bashrc.j2
-    dest: /root/.bashrc
-    mode: "0644"
-
 - name: Validate base_journald_forward_to_syslog
   ansible.builtin.assert:
     that: base_journald_forward_to_syslog in ["yes", "no", "ignore"]
