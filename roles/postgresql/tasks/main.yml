@@ -154,7 +154,7 @@
   apt:
     name:
      - prometheus-postgres-exporter
-  when: prometheus_server_ips|default([])|length > 1
+  when: prometheus_server_ips | default([]) | length > 0
 
 - name: Create database user prometheus
   become: yes
@@ -167,6 +167,7 @@
     password: "{{ postgres_password }}"
     role_attr_flags: SUPERUSER
   notify: Restart prometheus-postgres-exporter
+  when: prometheus_server_ips | default([]) | length > 0
 
 - name: Configure prometheus-postgres-exporter
   lineinfile:
@@ -174,6 +175,7 @@
     regexp: '^DATA_SOURCE_NAME\s*='
     line: "DATA_SOURCE_NAME='user=prometheus host=/run/postgresql dbname=postgres'"
   notify: Restart prometheus-postgres-exporter
+  when: prometheus_server_ips | default([]) | length > 0
 
 # Sometimes plays that are executed after this role (notable executing
 # "CREATE EXTENSION timescaledb") need PostgreSQL to have restarted in

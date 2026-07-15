@@ -80,7 +80,7 @@ Parameters
    default is ``true``. This has no effect unless
    :data:`base_setup_firewall` is ``true``.
 
-.. data:: base_prometheus_server_ips
+.. data:: prometheus_server_ips
 
    See the :ref:`prometheus` role.
 

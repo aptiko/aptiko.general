@@ -92,8 +92,8 @@
     path: /etc/nftables/ansible-late.nft
     marker: "# {mark} ANSIBLE MANAGED BLOCK prometheus"
     block: |
-      {% set prometheus_ipv4 = base_prometheus_server_ips.split() | select('search', '^[^:]+$') | list %}
-      {% set prometheus_ipv6 = base_prometheus_server_ips.split() | select('search', ':') | list %}
+      {% set prometheus_ipv4 = prometheus_server_ips | default([]) | select('search', '^[^:]+$') | list %}
+      {% set prometheus_ipv6 = prometheus_server_ips | default([]) | select('search', ':') | list %}
       {% if prometheus_ipv4 %}
       ip saddr { {{ prometheus_ipv4 | join(', ') }} } tcp accept
       {% endif %}
@@ -101,4 +101,4 @@
       ip6 saddr { {{ prometheus_ipv6 | join(', ') }} } tcp accept
       {% endif %}
   notify: Reload nftables
-  when: base_prometheus_server_ips | default('') | length > 0
+  when: prometheus_server_ips | default([]) | length > 0
