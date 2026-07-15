@@ -62,9 +62,9 @@
     dest: /etc/apache2/snippets/{{ grafana_server_name }}/grafana.conf
     mode: "0644"
   notify: Reload web server
-  when: >
-    ("aptiko.general.webserver" in ansible_role_names and webserver_type == "apache")
-    or "aptiko.general.apache" in ansible_role_names
+  when:
+    - "'aptiko.general.webserver' in ansible_role_names"
+    - webserver_type == "apache"
 
 - name: Configure nginx for Grafana
   ansible.builtin.template:
@@ -72,6 +72,6 @@
     dest: /etc/nginx/snippets/{{ grafana_server_name }}/grafana.conf
     mode: "0644"
   notify: Reload web server
-  when: >
-    ("aptiko.general.webserver" in ansible_role_names and webserver_type == "nginx")
-    or "aptiko.general.nginx" in ansible_role_names
+  when:
+    - "'aptiko.general.webserver' in ansible_role_names"
+    - webserver_type == "nginx"

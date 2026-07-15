@@ -23,10 +23,6 @@ Reference
 .. toctree::
    webserver
    website
-   apache
-   apache_vhost
-   nginx
-   nginx_site
    :maxdepth: 1
    :caption: Web server roles:
 
