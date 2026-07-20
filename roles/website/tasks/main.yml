@@ -22,12 +22,6 @@
     website_webserver_dirname: "{{ 'apache2' if webserver_type == 'apache' else 'nginx' }}"
 
 # Let's Encrypt
-- name: Check if letsencrypt certificate exists
-  ansible.builtin.stat:
-    path: /etc/letsencrypt/live/{{ website_letsencrypt_domain }}
-  register: letsencryptdir
-  when: website_ssl == "letsencrypt"
-
 - name: Ensure firewall allows certbot
   ansible.builtin.meta: flush_handlers
   when:
@@ -35,11 +29,21 @@
     - base_setup_firewall | default(false)
 
 - name: Install letsencrypt certificate
-  ansible.builtin.command: >
-    certbot certonly --{{ webserver_type }} --non-interactive --agree-tos
-    -m {{ website_letsencrypt_admin }} -d {{ website_letsencrypt_domain }}
-  when: website_ssl == "letsencrypt" and not letsencryptdir.stat.exists
-  changed_when: true
+  ansible.builtin.command:
+    argv:
+      - certbot
+      - certonly
+      - "--{{ webserver_type }}"
+      - --non-interactive
+      - --agree-tos
+      - --cert-name
+      - "{{ website_letsencrypt_domain }}"
+      - -m
+      - "{{ website_letsencrypt_admin }}"
+      - -d
+      - "{{ website_letsencrypt_domain }}"
+    creates: "/etc/letsencrypt/live/{{ website_letsencrypt_domain }}/fullchain.pem"
+  when: website_ssl == "letsencrypt"
 
 # Site setup
 - name: Configuration file for {{ website_domain }}
