@@ -95,10 +95,10 @@
       {% set prometheus_ipv4 = prometheus_server_ips | default([]) | select('search', '^[^:]+$') | list %}
       {% set prometheus_ipv6 = prometheus_server_ips | default([]) | select('search', ':') | list %}
       {% if prometheus_ipv4 %}
-      ip saddr { {{ prometheus_ipv4 | join(', ') }} } tcp accept
+      ip saddr { {{ prometheus_ipv4 | join(', ') }} } meta l4proto tcp accept
       {% endif %}
       {% if prometheus_ipv6 %}
-      ip6 saddr { {{ prometheus_ipv6 | join(', ') }} } tcp accept
+      ip6 saddr { {{ prometheus_ipv6 | join(', ') }} } meta l4proto tcp accept
       {% endif %}
   notify: Reload nftables
   when: prometheus_server_ips | default([]) | length > 0
