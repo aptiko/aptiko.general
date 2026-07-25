@@ -1,11 +1,9 @@
 ---
-# Remove apache stuff
 - name: Uninstall apache apt packages
   ansible.builtin.apt:
     state: absent
     name:
       - apache2
-      - ssl-cert
 
 - name: Remove /etc/apache2
   ansible.builtin.file:
