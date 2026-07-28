@@ -1,4 +1,10 @@
 ---
+- name: Verify firewall management is enabled
+  ansible.builtin.assert:
+    that: base_setup_firewall | default(false)
+    fail_msg: A task attempted to reload nftables while base_setup_firewall is false
+  listen: Reload nftables
+
 - name: Reload nftables
   ansible.builtin.command: nft -f /etc/nftables.conf
   changed_when: true
