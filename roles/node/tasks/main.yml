@@ -22,6 +22,27 @@
     repo: "deb [arch={{ get_architecture.stdout }} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ node_version }}.x nodistro main"
     filename: nodesource
 
-- name: Install nodejs
+- name: Get installed nodejs version
+  command:
+    argv:
+      - dpkg-query
+      - --show
+      - "--showformat=${Version}"
+      - nodejs
+  register: installed_nodejs_version
+  check_mode: no
+  failed_when: false
+  changed_when: false
+
+- name: Install nodejs  # noqa package-latest
   apt:
     name: nodejs
+    state: >-
+      {{
+        'present'
+        if installed_nodejs_version.rc == 0
+        and installed_nodejs_version.stdout is match(
+          '^(?:[0-9]+:)?' ~ (node_version | string) ~ '\.'
+        )
+        else 'latest'
+      }}

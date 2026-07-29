@@ -16,4 +16,8 @@ Parameters
 ==========
 
 node_version
-  The default is 20. You can use another number such as 18 or 21.
+  The default is 20. You can use another number such as 18 or 24. The role
+  upgrades Node.js when the installed major version differs. Once the configured
+  major version is installed, rerunning the role leaves its minor and patch
+  version unchanged. Downgrading from a newer major version is not supported
+  automatically.
