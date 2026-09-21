@@ -26,6 +26,12 @@ Parameters
    authorized_keys. If unspecified, the root's authorized keys are not
    touched.
 
+.. data:: base_configure_sshd
+
+   Optional. Whether to configure the SSH server. Defaults to ``true``.
+   Set to ``false`` on machines without sshd. This leaves root SSH keys
+   and firewall configuration under their existing settings.
+
 .. data:: base_ssh_port
 
    Optional. The port on which the ssh server will be listening. The
