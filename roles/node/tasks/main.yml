@@ -1,41 +1,45 @@
 ---
 - name: Install node repo prerequisites
-  apt:
+  ansible.builtin.apt:
     name:
-     - gnupg
-     - apt-transport-https
+      - gnupg
+      - apt-transport-https
 
 - name: Get node apt key
-  shell:
-    cmd: curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
-    creates: /usr/share/keyrings/nodesource.gpg
+  ansible.builtin.get_url:
+    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    dest: /usr/share/keyrings/nodesource.asc
+    mode: '0644'
 
 - name: Determine dpkg architecture for node
-  command: dpkg --print-architecture
+  ansible.builtin.command: dpkg --print-architecture
   register: get_architecture
-  check_mode: no
-  ignore_errors: yes
+  check_mode: false
+  ignore_errors: true
   changed_when: false
 
 - name: Add node apt repository
-  apt_repository:
-    repo: "deb [arch={{ get_architecture.stdout }} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ node_version }}.x nodistro main"
+  ansible.builtin.apt_repository:
+    repo: >
+      deb [arch={{ get_architecture.stdout }}
+      signed-by=/usr/share/keyrings/nodesource.asc]
+      https://deb.nodesource.com/node_{{ node_version }}.x nodistro main
     filename: nodesource
 
 - name: Get installed nodejs version
-  command:
+  ansible.builtin.command:
     argv:
       - dpkg-query
       - --show
       - "--showformat=${Version}"
       - nodejs
   register: installed_nodejs_version
-  check_mode: no
+  check_mode: false
   failed_when: false
   changed_when: false
 
 - name: Install nodejs  # noqa package-latest
-  apt:
+  ansible.builtin.apt:
     name: nodejs
     state: >-
       {{

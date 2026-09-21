@@ -1,6 +1,6 @@
 ---
 - name: Set variables for Debian 13
-  set_fact:
+  ansible.builtin.set_fact:
     postgresql_version: 17
     timescale_apt_package: postgresql-17-timescaledb
     postgis_apt_package: postgresql-17-postgis-3
@@ -9,7 +9,7 @@
   when: ansible_distribution_release == "trixie"
 
 - name: Set variables for Debian 12
-  set_fact:
+  ansible.builtin.set_fact:
     postgresql_version: 15
     timescale_apt_package: timescaledb-2-postgresql-15
     postgis_apt_package: postgresql-15-postgis-3
@@ -18,7 +18,7 @@
   when: ansible_distribution_release == "bookworm"
 
 - name: Set variables for Ubuntu 24.04
-  set_fact:
+  ansible.builtin.set_fact:
     postgresql_version: 16
     postgis_apt_package: postgresql-16-postgis-3
     postgis_scripts_apt_package: postgresql-16-postgis-3-scripts
@@ -27,7 +27,7 @@
   when: ansible_distribution_release == "noble"
 
 - name: Set variables for Ubuntu 22.04
-  set_fact:
+  ansible.builtin.set_fact:
     postgresql_version: 14
     postgis_apt_package: postgresql-14-postgis-3
     postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
@@ -36,88 +36,101 @@
   when: ansible_distribution_release == "jammy"
 
 - name: Install Timescale keyring
-  copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
+  ansible.builtin.copy:
+    src: timescale.keyring
+    dest: /usr/share/keyrings/timescale.keyring
+    mode: "0755"
   when: use_timescale and install_timescale_from_timescale_repo
 
 - name: Setup Timescale repository
-  apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} main
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb
+      [signed-by=/usr/share/keyrings/timescale.keyring]
+      https://packagecloud.io/timescale/timescaledb/{{ ansible_distribution|lower }}
+      {{ ansible_distribution_release }} main
     state: present
     update_cache: true
   when: use_timescale and install_timescale_from_timescale_repo
 
 - name: Install apt packages required for PostgreSQL
-  apt:
+  ansible.builtin.apt:
     name:
-     - "postgresql-{{ postgresql_version }}"
-     - "{{ postgis_apt_package }}"
-     - "{{ postgis_scripts_apt_package }}"
-     - python3-psycopg2
+      - "postgresql-{{ postgresql_version }}"
+      - "{{ postgis_apt_package }}"
+      - "{{ postgis_scripts_apt_package }}"
+      - python3-psycopg2
   environment:
     LC_CTYPE: en_US.UTF-8
 
 - name: Install Timescale
-  apt: name={{ timescale_apt_package }}
+  ansible.builtin.apt:
+    name: "{{ timescale_apt_package }}"
   when: use_timescale
 
 - name: Configure Timescale
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/postgresql/{{ postgresql_version}}/main/postgresql.conf
     line: "shared_preload_libraries = 'timescaledb'"
   when: use_timescale
   notify:
-   - Restart PostgreSQL
+    - Restart PostgreSQL
 
 - name: Install Greek unaccent rules
-  copy:
+  ansible.builtin.copy:
     src: unaccent.rules
     dest: /usr/share/postgresql/{{ postgresql_version }}/tsearch_data/unaccent.rules
+    mode: "0755"
 
 - name: Start PostgreSQL service
-  service: name=postgresql state=started enabled=true
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
 
 - name: Set pgpass file
-  copy:
+  ansible.builtin.copy:
     dest: /root/.pgpass
-    mode: 0600
+    mode: "0600"
     content: "localhost:5432:*:postgres:{{ postgres_password }}\n"
 
 - name: Check PostgreSQL password
-  command: psql -w -h localhost -U postgres -c "select 'dummy'" template1
+  ansible.builtin.command: psql -w -h localhost -U postgres -c "select 'dummy'" template1
   register: check_postgres_password
-  ignore_errors: yes
-  check_mode: no
-  changed_when: False
+  ignore_errors: true
+  check_mode: false
+  changed_when: false
 
 - name: Set PostgreSQL password
-  become: yes
+  become: true
   become_user: postgres
-  command: psql template1 -c "ALTER USER postgres PASSWORD '{{ postgres_password }}'"
+  ansible.builtin.command: psql template1 -c "ALTER USER postgres PASSWORD '{{ postgres_password }}'"
   when: check_postgres_password.rc != 0
+  changed_when: true
 
 - name: Create PostGIS template database
-  postgresql_db:
+  community.postgresql.postgresql_db:
     name: template_postgis
     template: template0
     encoding: UTF-8
     lc_collate: en_US.UTF-8
     lc_ctype: en_US.UTF-8
-  become: yes
+  become: true
   become_user: postgres
 
 - name: Check if PostGIS template database is setup
-  become: yes
+  become: true
   become_user: postgres
-  command: psql -c "SELECT * FROM spatial_ref_sys LIMIT 1" template_postgis
+  ansible.builtin.command: psql -c "SELECT * FROM spatial_ref_sys LIMIT 1" template_postgis
   register: check_postgis_template
-  ignore_errors: yes
-  check_mode: no
-  changed_when: False
+  ignore_errors: true
+  check_mode: false
+  changed_when: false
 
 - name: Setup PostGIS template database
-  become: yes
+  become: true
   become_user: postgres
-  shell: >
+  ansible.builtin.shell: >
     psql -c "CREATE LANGUAGE plpgsql" -d template_postgis;
     psql -c "CREATE EXTENSION postgis;" template_postgis;
     psql -c "CREATE EXTENSION postgis_raster;" template_postgis;
@@ -126,9 +139,10 @@
     psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
     psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
   when: check_postgis_template.rc != 0
+  changed_when: true
 
 - name: Backup PostgreSQL
-  copy:
+  ansible.builtin.copy:
     content: |
       #!/bin/bash
       cd /
@@ -147,17 +161,17 @@
         fi
       done
     dest: /etc/duply/main/pre-scripts/postgres
-    mode: 0755
+    mode: "0755"
   when: (duply_deactivate is not defined) or not duply_deactivate
 
 - name: Install prometheus-postgres-exporter
-  apt:
+  ansible.builtin.apt:
     name:
-     - prometheus-postgres-exporter
+      - prometheus-postgres-exporter
   when: prometheus_server_ips | default([]) | length > 0
 
 - name: Create database user prometheus
-  become: yes
+  become: true
   become_user: postgres
   community.postgresql.postgresql_user:
     login_db: postgres
@@ -170,7 +184,7 @@
   when: prometheus_server_ips | default([]) | length > 0
 
 - name: Configure prometheus-postgres-exporter
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/default/prometheus-postgres-exporter
     regexp: '^DATA_SOURCE_NAME\s*='
     line: "DATA_SOURCE_NAME='user=prometheus host=/run/postgresql dbname=postgres'"
@@ -183,4 +197,4 @@
 # configuring Timescale). We therefore cannot defer restarting
 # PostgreSQL any more.
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
