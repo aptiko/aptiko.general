@@ -17,6 +17,15 @@
     install_timescale_from_timescale_repo: true
   when: ansible_distribution_release == "bookworm"
 
+- name: Set variables for Ubuntu 26.04
+  ansible.builtin.set_fact:
+    postgresql_version: 18
+    postgis_apt_package: postgresql-18-postgis-3
+    postgis_scripts_apt_package: postgresql-18-postgis-3-scripts
+    timescale_apt_package: timescaledb-2-postgresql-18
+    install_timescale_from_timescale_repo: true
+  when: ansible_distribution_release == "resolute"
+
 - name: Set variables for Ubuntu 24.04
   ansible.builtin.set_fact:
     postgresql_version: 16
