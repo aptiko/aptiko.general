@@ -26,6 +26,25 @@ Parameters
    authorized_keys. If unspecified, the root's authorized keys are not
    touched.
 
+.. data:: base_agent_authorized_keys
+
+   Optional. A list of ssh public keys for ``agent``, an account meant for
+   an AI agent or other helper that logs in to diagnose problems. If
+   nonempty, the role creates ``agent`` as a member of the ``adm`` and
+   ``systemd-journal`` groups, so it can read :file:`/var/log` and the
+   journal, but without sudo or other root access. Any other keys are
+   removed from its authorized_keys. Each key is prefixed with the
+   ``restrict,pty`` options, which allow an interactive shell but forbid
+   port, agent and X11 forwarding; a key may start with further options,
+   such as ``from="192.0.2.1" ssh-ed25519 AAAA...``. If empty (the
+   default), the account is removed, together with its home directory,
+   but only if its comment (GECOS) field is ``aptiko.general diagnostic
+   agent``, which the role sets when it creates it; an unrelated
+   ``agent`` user is left alone.
+
+   Logs and world-readable files may contain secrets, which the agent will
+   be able to read.
+
 .. data:: base_configure_sshd
 
    Optional. Whether to configure the SSH server. Defaults to ``true``.

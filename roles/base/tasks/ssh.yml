@@ -35,6 +35,46 @@
     key: "{% for key in base_root_authorized_keys %}{{ key }}\n{% endfor %}"
   when: base_root_authorized_keys | default([]) | length > 0
 
+- name: Create agent diagnostic account
+  ansible.builtin.user:
+    name: agent
+    comment: aptiko.general diagnostic agent
+    shell: /bin/bash
+    groups: [adm, systemd-journal]
+    # "*" rather than the default "!", which sshd treats as locked without PAM
+    password: "*"
+  when: base_agent_authorized_keys | length > 0
+
+- name: Setup agent authorized keys
+  ansible.posix.authorized_key:
+    user: agent
+    exclusive: true
+    # Not key_options, which would discard options (e.g. from=) in the keys
+    key: |
+      {% for key in base_agent_authorized_keys %}
+      restrict,pty{{ ' ' if key is match('(ssh|ecdsa|sk)-') else ',' }}{{ key }}
+      {% endfor %}
+  when: base_agent_authorized_keys | length > 0
+
+- name: Check for existing agent account
+  ansible.builtin.getent:
+    database: passwd
+    key: agent
+    fail_key: false
+  when: base_agent_authorized_keys | length == 0
+
+# Only remove the account if this role created it
+- name: Remove agent diagnostic account
+  ansible.builtin.user:
+    name: agent
+    state: absent
+    remove: true
+    force: true
+  when:
+    - base_agent_authorized_keys | length == 0
+    - (ansible_facts.getent_passwd.agent or [])[3]
+      | default('') == 'aptiko.general diagnostic agent'
+
 - name: Configure PermitRootLogin
   ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config

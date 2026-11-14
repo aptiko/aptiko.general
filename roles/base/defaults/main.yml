@@ -11,3 +11,4 @@ base_ssh_port: 22
 base_ssh_allowed_ip_addresses: []
 base_use_fail2ban: true
 base_journald_forward_to_syslog: ignore
+base_agent_authorized_keys: []
