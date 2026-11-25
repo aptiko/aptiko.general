@@ -1,0 +1,4 @@
+---
+# A var, not a fact set by a task, so that the handlers work also when
+# --tags skips this role's tasks
+webserver_webserver_dirname: "{{ 'apache2' if webserver_type == 'apache' else 'nginx' }}"
