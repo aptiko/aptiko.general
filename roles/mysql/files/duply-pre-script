@@ -1,0 +1,66 @@
+#!/bin/bash
+cd /
+mkdir -p /var/backups/mysql
+chmod 700 /var/backups/mysql
+opts=--defaults-extra-file=/root/.mysql-backup.cnf
+report_errors() {
+  if grep -q -i warn "$1" || grep -q -i err "$1"; then
+    cat "$1"
+  fi
+}
+
+# Users and grants as statements, restorable onto newer versions of
+# the same server; in a subdirectory so that no database dump clashes
+mkdir -p /var/backups/mysql/users
+usersfile=/var/backups/mysql/users/users.sql
+errfile=/var/backups/mysql/users/users.err
+version=$(mysql $opts -NBe "SELECT VERSION()" 2>$errfile)
+if [ -z "$version" ]; then
+  cat $errfile
+elif [[ $version == *MariaDB* ]]; then
+  mysqldump $opts --system=users --insert-ignore \
+    --result-file=$usersfile 2>$errfile
+  report_errors $errfile
+else
+  users=$(
+    mysql $opts -NBe "SELECT CONCAT(QUOTE(user), '@', QUOTE(host))
+                      FROM mysql.user WHERE user NOT LIKE 'mysql.%'"
+  )
+  {
+    # Default roles are set last, as the roles must exist and be
+    # granted first
+    defaults=
+    while IFS= read -r u; do
+      create=$(
+        mysql $opts -NBre "SET SESSION print_identified_with_as_hex=ON;
+                           SHOW CREATE USER $u"
+      )
+      roles=$(
+        sed -n 's/.* DEFAULT ROLE \(.*\) REQUIRE .*/\1/p' <<<"$create"
+      )
+      if [ -n "$roles" ]; then
+        defaults+="ALTER USER $u DEFAULT ROLE $roles;"$'\n'
+      fi
+      sed 's/^CREATE USER /CREATE USER IF NOT EXISTS /
+           s/ DEFAULT ROLE .* REQUIRE / REQUIRE /
+           s/$/;/' <<<"$create"
+    done <<<"$users"
+    while IFS= read -r u; do
+      mysql $opts -NBre "SHOW GRANTS FOR $u" | sed 's/$/;/'
+    done <<<"$users"
+    printf %s "$defaults"
+  } >$usersfile 2>$errfile
+  report_errors $errfile
+fi
+
+databases=$(
+  mysql $opts -NBe "SHOW DATABASES" |
+  grep -Ev '^(information_schema|performance_schema|sys)$'
+)
+for db in $databases; do
+  errfile=/var/backups/mysql/$db.err
+  dumpfile=/var/backups/mysql/$db.sql
+  mysqldump $opts --single-transaction --routines --events \
+    --result-file=$dumpfile $db 2>$errfile
+  report_errors $errfile
+done

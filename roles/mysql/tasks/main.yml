@@ -97,25 +97,7 @@
 
 - name: Backup MySQL
   ansible.builtin.copy:
-    content: |
-      #!/bin/bash
-      cd /
-      mkdir -p /var/backups/mysql
-      chmod 700 /var/backups/mysql
-      opts=--defaults-extra-file=/root/.mysql-backup.cnf
-      databases=$(
-        mysql $opts -NBe "SHOW DATABASES" |
-        grep -Ev '^(information_schema|performance_schema|sys)$'
-      )
-      for db in $databases; do
-        errfile=/var/backups/mysql/$db.err
-        dumpfile=/var/backups/mysql/$db.sql
-        mysqldump $opts --single-transaction --routines --events \
-          --result-file=$dumpfile $db 2>$errfile
-        if grep -q -i warn $errfile || grep -q -i err $errfile; then
-          cat $errfile
-        fi
-      done
+    src: duply-pre-script
     dest: /etc/duply/main/pre-scripts/mysql
     mode: "0755"
   when: (duply_deactivate is not defined) or not duply_deactivate
